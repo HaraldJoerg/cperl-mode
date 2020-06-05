@@ -5425,7 +5425,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
            (match-beginning 5)          ; package name
            ;;(eq (char-after (match-beginning 2)) ?p) ; package
            (not (save-match-data
-                  (looking-at "[ \t\n]*;")))) ; Plain text word 'package'
+                  (looking-at "[ \t\n]*[;{]")))) ; Plain text word 'package'
           nil)
          ((and
            (or (match-beginning 2)
