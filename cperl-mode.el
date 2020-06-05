@@ -8,7 +8,8 @@
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: languages, Perl
 
-;; This file is part of GNU Emacs.
+;; This file is based on the original which is part of GNU Emacs.
+;; Modifications 2020 by Harald Joerg <haj@posteo.de>
 
 ;; GNU Emacs is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -21,20 +22,18 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
+;; from the same repository where you found this file.  If not, see
+;; <https://www.gnu.org/licenses/>.
 
 ;; Corrections made by Ilya Zakharevich ilyaz@cpan.org
 
 ;;; Commentary:
 
-;; This version of the file contains support for the syntax added by
-;; the MooseX::Declare CPAN module, as well as Perl 5.10 keyword
-;; support.
+;; This file contains experimental support for various non-core
+;; feature sets of Perl, including the not-yet-released Cor OO system.
 
 ;; The latest version is available from
-;; http://github.com/jrockway/cperl-mode
-;;
-;; (perhaps in the moosex-declare branch)
+;; http://github.com/HaraldJoerg/cperl-mode
 
 ;; You can either fine-tune the bells and whistles of this mode or
 ;; bulk enable them by putting
@@ -1275,6 +1274,25 @@ Should contain exactly one group.")
 (defconst cperl-white-and-comment-rex "\\([ \t\n]\\|#[^\n]*\n\\)+"
 "Regular expression to match whitespace with interspersed comments.
 Should contain exactly one group.")
+
+;;; Perl keywords and regular expressions
+(defvar cperl-namespace-keywords-regexp nil
+  "Regular expression to capture keywords which introduce a namespace."
+  )
+
+(defvar cperl-core-namespace-keywords
+  '("package" "require" "use" "no" "bootstrap")
+  "Keywords which introduce a namespace in Perl")
+
+(defun cperl-collect-keyword-regexps ()
+  "Merge all keyword lists to optimized regular expressions which
+   will actually be used by cperl-mode."
+  (setq cperl-namespace-keywords-regexp
+        (regexp-opt (append
+                     cperl-core-namespace-keywords
+                     ;; other keyword sets to be inserted here
+                     )))
+  )
 
 
 ;; Is incorporated in `cperl-imenu--function-name-regexp-perl'
@@ -5492,6 +5510,10 @@ indentation and initial hashes.  Behaves usually outside of comment."
   )
 
 (defun cperl-init-faces ()
+  ;; TODO: when to collect the keywords needs to be reviewed if we
+  ;; want to allow different keyword sets in different cperl-mode
+  ;; buffers (like, e.g. a Moose class and a test file).
+  (cperl-collect-keyword-regexps)
   (condition-case errs
       (progn
 	(require 'font-lock)
@@ -5654,8 +5676,9 @@ indentation and initial hashes.  Behaves usually outside of comment."
 			 (if (eq (char-after (cperl-1- (match-end 0))) ?\{ )
 			     'font-lock-function-name-face
 			   'font-lock-variable-name-face))))
-	    '("\\<\\(package\\|require\\|use\\|import\\|no\\|bootstrap\\)[ \t]+\\([a-zA-Z_][a-zA-Z_0-9:]*\\)[ \t;]" ; require A if B;
-	      2 font-lock-function-name-face)
+        (list (concat "\\<\\(" cperl-namespace-keywords-regexp
+                      "\\)[ \t]+\\([a-zA-Z_][a-zA-Z_0-9:]*\\)[ \t;]")
+              2 font-lock-function-name-face) ; require A if B;
 	    '("^[ \t]*format[ \t]+\\([a-zA-Z_][a-zA-Z_0-9:]*\\)[ \t]*=[ \t]*$"
 	      1 font-lock-function-name-face)
 	    (cond ((featurep 'font-lock-extra)
