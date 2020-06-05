@@ -1276,22 +1276,134 @@ Should contain exactly one group.")
 Should contain exactly one group.")
 
 ;;; Perl keywords and regular expressions
-(defvar cperl-namespace-keywords-regexp nil
-  "Regular expression to capture keywords which introduce a namespace."
-  )
-
 (defvar cperl-core-namespace-keywords
   '("package" "require" "use" "no" "bootstrap")
   "Keywords which introduce a namespace in Perl")
 
+(defvar cperl-core-functions-for-font-lock
+  '("CORE" "__FILE__" "__LINE__" "__PACKAGE__" "__SUB__"
+    "abs" "accept" "alarm" "and" "atan2"
+    "bind" "binmode" "bless" "bootstrap"
+    "caller" "chdir" "chmod" "chown" "chr" "chroot" "close" "closedir"
+    "cmp" "connect" "continue" "cos" "crypt"
+    "dbmclose" "dbmopen" "die" "dump"
+    "endgrent" "endhostent" "endnetent" "endprotoent" "endpwent"
+    "endservent" "eof" "eq" "exec" "exit" "exp"        "fc" "fcntl"
+    "fileno" "flock" "fork" "formline"
+    "ge" "getc" "getgrent" "getgrgid" "getgrnam" "gethostbyaddr"
+    "gethostbyname" "gethostent" "getlogin" "getnetbyaddr" "getnetbyname"
+    "getnetent" "getpeername" "getpgrp" "getppid" "getpriority"
+    "getprotobyname" "getprotobynumber" "getprotoent"
+    "getpwent" "getpwnam" "getpwuid" "getservbyname"
+    "getservbyport" "getservent" "getsockname"
+    "getsockopt" "glob" "gmtime" "gt"        "hex"
+    "index" "int" "ioctl"        "join"        "kill"
+    "lc" "lcfirst" "le" "length" "link" "listen" "localtime" "lock" "log"
+    "lstat" "lt"
+    "mkdir" "msgctl" "msgget" "msgrcv" "msgsnd"        "ne" "not"
+    "oct" "open" "opendir" "or" "ord"        "pack" "pipe"        "quotemeta"
+    "rand" "read" "readdir" "readline" "readlink" "readpipe" "recv" "ref"
+    "rename" "require" "reset" "reverse" "rewinddir" "rindex" "rmdir"
+    "seek" "seekdir" "select" "semctl" "semget" "semop" "send" "setgrent"
+    "sethostent" "setnetent" "setpgrp" "setpriority" "setprotoent"
+    "setpwent" "setservent" "setsockopt" "shmctl" "shmget" "shmread"
+    "shmwrite" "shutdown" "sin" "sleep" "socket" "socketpair" "sprintf"
+    "sqrt" "srand" "stat" "substr" "symlink" "syscall" "sysopen" "sysread"
+    "sysseek" "system" "syswrite"
+    "tell" "telldir" "time" "times" "truncate"
+    "uc" "ucfirst" "umask" "unlink" "unpack" "utime"        "values" "vec"
+    "wait" "waitpid" "wantarray" "warn" "write"        "x" "xor"
+    )
+  "The list of functions to be font-locked")
+
+(defvar cperl-core-sub-keywords
+  '("sub")
+  "Keywords starting a subroutine in Perl core")
+
+(defvar cperl-core-declaring-keywords
+  '("local" "my" "our" "state")
+  "Keywords preceding variable names"
+  )
+
+(defvar cperl-core-flow-control-keywords
+  (append cperl-core-sub-keywords
+          cperl-core-declaring-keywords
+          '(
+            "BEGIN" "CHECK" "END" "INIT" "UNITCHECK"
+            "break"
+            "catch" "continue"
+            "default" "die" "do"
+            "elsif" "else" "eval" "evalbytes" "exec" "exit"
+            "for" "foreach" "finally"
+            "given" "goto"
+            "if"
+            "last"
+            "package"
+            "next"
+            "redo" "require" "return"
+            "try"
+            "unless" "until" "use"
+            "while" "when"
+            )
+          )
+  "Keywords for flow control"
+  )
+
+(defvar cperl-core-nonoverridable-functions
+  (append cperl-core-flow-control-keywords
+  '("AUTOLOAD" "DESTROY"
+    "__END__" "__DATA__"
+    "catch" "chop" "chomp"
+    "defined" "delete" "each"
+    "exists" "format" "finally"
+    "grep" "keys" "m" "map"
+    "no" "pop" "pos" "print" "printf" "prototype" "push"
+    "q" "qq" "qw" "qx" "s" "say" "scalar" "shift"
+    "sort" "splice" "split" "study" "sub" "tie" "tied" "tr" "try"
+    "undef" "unshift" "untie"
+    "y"))
+  "Keywords shown as non-overridable (though some of them are)"
+  )
+
+
+(defvar cperl-core-after-label-keywords
+  '("do" "for" "foreach" "until" "while")
+  "Keywords which can follow a label")
+(defvar cperl-core-before-label-keywords
+  '("break" "continue" "goto" "last" "next" "redo")
+  "Keywords which require a label as target")
+
+(defvar cperl-namespace-keywords       cperl-core-namespace-keywords)
+(defvar cperl-functions-for-font-lock  cperl-core-functions-for-font-lock)
+(defvar cperl-flow-control-keywords    cperl-core-flow-control-keywords)
+(defvar cperl-nonoverridable-functions cperl-core-nonoverridable-functions)
+(defvar cperl-sub-keywords             cperl-core-sub-keywords)
+(defvar cperl-after-label-keywords     cperl-core-after-label-keywords)
+(defvar cperl-before-label-keywords    cperl-core-before-label-keywords)
+(defvar cperl-declaring-keywords       cperl-core-declaring-keywords)
+
+
+(defvar cperl-namespace-keywords-regexp (regexp-opt cperl-namespace-keywords))
+(defvar cperl-functions-regexp          (regexp-opt cperl-functions-for-font-lock))
+(defvar cperl-flow-control-regexp       (regexp-opt cperl-flow-control-keywords))
+(defvar cperl-nonoverridable-regexp     (regexp-opt cperl-nonoverridable-functions))
+(defvar cperl-sub-regexp                (regexp-opt cperl-sub-keywords))
+(defvar cperl-after-label-regexp        (regexp-opt cperl-after-label-keywords))
+(defvar cperl-before-label-regexp       (regexp-opt cperl-before-label-keywords))
+(defvar cperl-declaring-regexp          (regexp-opt cperl-declaring-keywords))
+
 (defun cperl-collect-keyword-regexps ()
   "Merge all keyword lists to optimized regular expressions which
    will actually be used by cperl-mode."
-  (setq cperl-namespace-keywords-regexp
-        (regexp-opt (append
-                     cperl-core-namespace-keywords
-                     ;; other keyword sets to be inserted here
-                     )))
+  (setq cperl-namespace-keywords-regexp    (regexp-opt cperl-namespace-keywords)
+        cperl-functions-regexp             (regexp-opt cperl-functions-for-font-lock)
+        cperl-flow-control-regexp          (regexp-opt cperl-flow-control-keywords)
+        cperl-nonoverridable-regexp        (regexp-opt cperl-nonoverridable-functions)
+        cperl-sub-regexp                   (regexp-opt cperl-sub-keywords)
+        cperl-after-label-regexp           (regexp-opt cperl-after-label-keywords)
+        cperl-before-label-regexp          (regexp-opt cperl-before-label-keywords)
+        cperl-declaring-regexp             (regexp-opt cperl-declaring-keywords)
+        )
   )
 
 
@@ -1333,13 +1445,6 @@ the last)."
      "\\)"
    "\\)?"                               ; END n+6=proto-group
    ))
-
-;; Tired of editing this in 8 places every time I remember that there
-;; is another method-defining keyword
-(defvar cperl-sub-keywords
-  '("sub"))
-
-(defvar cperl-sub-regexp (regexp-opt cperl-sub-keywords))
 
 (defun cperl-char-ends-sub-keyword-p (char)
   "Return t if CHAR is the last character of a perl sub keyword."
@@ -5513,7 +5618,6 @@ indentation and initial hashes.  Behaves usually outside of comment."
   ;; TODO: when to collect the keywords needs to be reviewed if we
   ;; want to allow different keyword sets in different cperl-mode
   ;; buffers (like, e.g. a Moose class and a test file).
-  (cperl-collect-keyword-regexps)
   (condition-case errs
       (progn
         (require 'font-lock)
@@ -5529,126 +5633,25 @@ indentation and initial hashes.  Behaves usually outside of comment."
             `("[ \t]+$" 0 ',cperl-invalid-face t)
             (cons
              (concat
-              "\\(^\\|[^$@%&\\]\\)\\<\\("
-              ;; FIXME: Use regexp-opt.
-              (mapconcat
-               #'identity
-               (append
-                cperl-sub-keywords
-                '("if" "until" "while" "elsif" "else"
-                 "given" "when" "default" "break"
-                 "unless" "for"
-                 "try" "catch" "finally"
-                 "foreach" "continue" "exit" "die" "last" "goto" "next"
-                 "redo" "return" "local" "exec"
-                 "do" "dump"
-                 "use" "our"
-                 "require" "package" "eval" "evalbytes" "my" "state"
-                 "BEGIN" "END" "CHECK" "INIT" "UNITCHECK"))
-               "\\|")                   ; Flow control
-              "\\)\\>") 2)              ; was "\\)[ \n\t;():,|&]"
-                                        ; In what follows we use `type' style
-                                        ; for overwritable builtins
+              "\\(?:^\\|[^$@%&\\]\\)\\<\\("
+              cperl-flow-control-regexp
+              "\\)\\>") 1)              ; was "\\)[ \n\t;():,|&]"
+            ; In what follows we use `type' style
+            ; for overwritable builtins
             (list
              (concat
-              "\\(^\\|[^$@%&\\]\\)\\<\\("
-              ;; FIXME: Use regexp-opt.
-              ;; "CORE" "__FILE__" "__LINE__" "__SUB__" "abs" "accept" "alarm"
-              ;; "and" "atan2" "bind" "binmode" "bless" "caller"
-              ;; "chdir" "chmod" "chown" "chr" "chroot" "close"
-              ;; "closedir" "cmp" "connect" "continue" "cos" "crypt"
-              ;; "dbmclose" "dbmopen" "die" "dump" "endgrent"
-              ;; "endhostent" "endnetent" "endprotoent" "endpwent"
-              ;; "endservent" "eof" "eq" "exec" "exit" "exp" "fc" "fcntl"
-              ;; "fileno" "flock" "fork" "formline" "ge" "getc"
-              ;; "getgrent" "getgrgid" "getgrnam" "gethostbyaddr"
-              ;; "gethostbyname" "gethostent" "getlogin"
-              ;; "getnetbyaddr" "getnetbyname" "getnetent"
-              ;; "getpeername" "getpgrp" "getppid" "getpriority"
-              ;; "getprotobyname" "getprotobynumber" "getprotoent"
-              ;; "getpwent" "getpwnam" "getpwuid" "getservbyname"
-              ;; "getservbyport" "getservent" "getsockname"
-              ;; "getsockopt" "glob" "gmtime" "gt" "hex" "index" "int"
-              ;; "ioctl" "join" "kill" "lc" "lcfirst" "le" "length"
-              ;; "link" "listen" "localtime" "lock" "log" "lstat" "lt"
-              ;; "mkdir" "msgctl" "msgget" "msgrcv" "msgsnd" "ne"
-              ;; "not" "oct" "open" "opendir" "or" "ord" "pack" "pipe"
-              ;; "quotemeta" "rand" "read" "readdir" "readline"
-              ;; "readlink" "readpipe" "recv" "ref" "rename" "require"
-              ;; "reset" "reverse" "rewinddir" "rindex" "rmdir" "seek"
-              ;; "seekdir" "select" "semctl" "semget" "semop" "send"
-              ;; "setgrent" "sethostent" "setnetent" "setpgrp"
-              ;; "setpriority" "setprotoent" "setpwent" "setservent"
-              ;; "setsockopt" "shmctl" "shmget" "shmread" "shmwrite"
-              ;; "shutdown" "sin" "sleep" "socket" "socketpair"
-              ;; "sprintf" "sqrt" "srand" "stat" "substr" "symlink"
-              ;; "syscall" "sysopen" "sysread" "sysseek" "system" "syswrite" "tell"
-              ;; "telldir" "time" "times" "truncate" "uc" "ucfirst"
-              ;; "umask" "unlink" "unpack" "utime" "values" "vec"
-              ;; "wait" "waitpid" "wantarray" "warn" "write" "x" "xor"
-              "a\\(bs\\|ccept\\|tan2\\|larm\\|nd\\)\\|"
-              "b\\(in\\(d\\|mode\\)\\|less\\)\\|"
-              "c\\(h\\(r\\(\\|oot\\)\\|dir\\|mod\\|own\\)\\|aller\\|rypt\\|"
-              "lose\\(\\|dir\\)\\|mp\\|o\\(s\\|n\\(tinue\\|nect\\)\\)\\)\\|"
-              "CORE\\|d\\(ie\\|bm\\(close\\|open\\)\\|ump\\)\\|"
-              "e\\(x\\(p\\|it\\|ec\\)\\|q\\|nd\\(p\\(rotoent\\|went\\)\\|"
-              "hostent\\|servent\\|netent\\|grent\\)\\|of\\)\\|"
-              "f\\(ileno\\|c\\(ntl\\)?\\|lock\\|or\\(k\\|mline\\)\\)\\|"
-              "g\\(t\\|lob\\|mtime\\|e\\(\\|t\\(p\\(pid\\|r\\(iority\\|"
-              "oto\\(byn\\(ame\\|umber\\)\\|ent\\)\\)\\|eername\\|w"
-              "\\(uid\\|ent\\|nam\\)\\|grp\\)\\|host\\(by\\(addr\\|name\\)\\|"
-              "ent\\)\\|s\\(erv\\(by\\(port\\|name\\)\\|ent\\)\\|"
-              "ock\\(name\\|opt\\)\\)\\|c\\|login\\|net\\(by\\(addr\\|name\\)\\|"
-              "ent\\)\\|gr\\(ent\\|nam\\|gid\\)\\)\\)\\)\\|"
-              "hex\\|i\\(n\\(t\\|dex\\)\\|octl\\)\\|join\\|kill\\|"
-              "l\\(i\\(sten\\|nk\\)\\|stat\\|c\\(\\|first\\)\\|t\\|e"
-              "\\(\\|ngth\\)\\|o\\(c\\(altime\\|k\\)\\|g\\)\\)\\|m\\(sg\\(rcv\\|snd\\|"
-              "ctl\\|get\\)\\|kdir\\)\\|n\\(e\\|ot\\)\\|o\\(pen\\(\\|dir\\)\\|"
-              "r\\(\\|d\\)\\|ct\\)\\|p\\(ipe\\|ack\\)\\|quotemeta\\|"
-              "r\\(index\\|and\\|mdir\\|e\\(quire\\|ad\\(pipe\\|\\|lin"
-              "\\(k\\|e\\)\\|dir\\)\\|set\\|cv\\|verse\\|f\\|winddir\\|name"
-              "\\)\\)\\|s\\(printf\\|qrt\\|rand\\|tat\\|ubstr\\|e\\(t\\(p\\(r"
-              "\\(iority\\|otoent\\)\\|went\\|grp\\)\\|hostent\\|s\\(ervent\\|"
-              "ockopt\\)\\|netent\\|grent\\)\\|ek\\(\\|dir\\)\\|lect\\|"
-              "m\\(ctl\\|op\\|get\\)\\|nd\\)\\|h\\(utdown\\|m\\(read\\|ctl\\|"
-              "write\\|get\\)\\)\\|y\\(s\\(read\\|call\\|open\\|tem\\|write\\|seek\\)\\|"
-              "mlink\\)\\|in\\|leep\\|ocket\\(pair\\|\\)\\)\\|t\\(runcate\\|"
-              "ell\\(\\|dir\\)\\|ime\\(\\|s\\)\\)\\|u\\(c\\(\\|first\\)\\|"
-              "time\\|mask\\|n\\(pack\\|link\\)\\)\\|v\\(alues\\|ec\\)\\|"
-              "w\\(a\\(rn\\|it\\(pid\\|\\)\\|ntarray\\)\\|rite\\)\\|"
-              "x\\(\\|or\\)\\|__\\(FILE\\|LINE\\|PACKAGE\\|SUB\\)__"
-              "\\)\\>") 2 'font-lock-type-face)
+              "\\(?:^\\|[^$@%&\\]\\)\\<\\("
+              cperl-functions-regexp
+              "\\)\\>")
+             1 'font-lock-type-face)
             ;; In what follows we use `other' style
             ;; for nonoverwritable builtins
-            ;; Somehow 's', 'm' are not auto-generated???
             (list
              (concat
-              "\\(^\\|[^$@%&\\]\\)\\<\\("
-              ;; "AUTOLOAD" "BEGIN" "CHECK" "DESTROY" "END" "INIT" "UNITCHECK" "__END__" "chomp"
-              ;; "break" "chop" "default" "defined" "delete" "do" "each" "else" "elsif"
-              ;; "eval" "evalbytes" "exists" "for" "foreach" "format" "given" "goto"
-              ;; "grep" "if" "keys" "last" "local" "map" "my" "next"
-              ;; "no" "our" "package" "pop" "pos" "print" "printf" "prototype" "push"
-              ;; "q" "qq" "qw" "qx" "redo" "return" "say" "scalar" "shift"
-              ;; "sort" "splice" "split" "state" "study" "sub" "tie" "tr"
-              ;; "undef" "unless" "unshift" "untie" "until" "use"
-              ;; "when" "while" "y"
-              "AUTOLOAD\\|BEGIN\\|\\(UNIT\\)?CHECK\\|break\\|c\\(atch\\|ho\\(p\\|mp\\)\\)\\|d\\(e\\(f\\(inally\\|ault\\|ined\\)\\|lete\\)\\|"
-              "o\\)\\|DESTROY\\|e\\(ach\\|val\\(bytes\\)?\\|xists\\|ls\\(e\\|if\\)\\)\\|"
-              "END\\|for\\(\\|each\\|mat\\)\\|g\\(iven\\|rep\\|oto\\)\\|INIT\\|if\\|keys\\|"
-              "l\\(ast\\|ocal\\)\\|m\\(ap\\|y\\)\\|n\\(ext\\|o\\)\\|our\\|"
-              "p\\(ackage\\|rototype\\|rint\\(\\|f\\)\\|ush\\|o\\(p\\|s\\)\\)\\|"
-              "q\\(\\|q\\|w\\|x\\|r\\)\\|re\\(turn\\|do\\)\\|s\\(ay\\|pli\\(ce\\|t\\)\\|"
-              "calar\\|t\\(ate\\|udy\\)\\|ub\\|hift\\|ort\\)\\|t\\(ry?\\|ied?\\)\\|"
-              "u\\(se\\|n\\(shift\\|ti\\(l\\|e\\)\\|def\\|less\\)\\)\\|"
-              "wh\\(en\\|ile\\)\\|y\\|__\\(END\\|DATA\\)__" ;__DATA__ added manually
-              "\\|[sm]"                         ; Added manually
+              "\\(?:^\\|[^$@%&\\]\\)\\<\\("
+              cperl-nonoverridable-regexp
               "\\)\\>")
-             2 'cperl-nonoverridable-face)
-            ;;          (mapconcat #'identity
-            ;;                     '("#endif" "#else" "#ifdef" "#ifndef" "#if"
-            ;;                       "#include" "#define" "#undef")
-            ;;                     "\\|")
+             1 'cperl-nonoverridable-face)
             '("-[rwxoRWXOezsfdlpSbctugkTBMAC]\\>\\([ \t]+_\\>\\)?" 0
               font-lock-function-name-face keep) ; Not very good, triggers at "[a-z]"
             ;; This highlights declarations and definitions differently.
@@ -5676,9 +5679,9 @@ indentation and initial hashes.  Behaves usually outside of comment."
                          (if (eq (char-after (cperl-1- (match-end 0))) ?\{ )
                              'font-lock-function-name-face
                            'font-lock-variable-name-face))))
-        (list (concat "\\<\\(" cperl-namespace-keywords-regexp
-                      "\\)[ \t]+\\([a-zA-Z_][a-zA-Z_0-9:]*\\)[ \t;]")
-              2 font-lock-function-name-face) ; require A if B;
+        (list (concat "\\<" cperl-namespace-keywords-regexp
+                      "[ \t]+\\([a-zA-Z_][a-zA-Z_0-9:]*\\)[ \t;]")
+              1 font-lock-function-name-face) ; require A if B;
             '("^[ \t]*format[ \t]+\\([a-zA-Z_][a-zA-Z_0-9:]*\\)[ \t]*=[ \t]*$"
               1 font-lock-function-name-face)
             (cond ((featurep 'font-lock-extra)
@@ -5695,10 +5698,12 @@ indentation and initial hashes.  Behaves usually outside of comment."
                        2 font-lock-string-face t)))
             '("[[ \t{,(]\\(-?[a-zA-Z0-9_:]+\\)[ \t]*=>" 1
               font-lock-string-face t)
-            '("^[ \t]*\\([a-zA-Z0-9_]+[ \t]*:\\)[ \t]*\\($\\|{\\|\\<\\(until\\|while\\|for\\(each\\)?\\|do\\)\\>\\)" 1
-              font-lock-constant-face)  ; labels
-            '("\\<\\(continue\\|next\\|last\\|redo\\|break\\|goto\\)\\>[ \t]+\\([a-zA-Z0-9_:]+\\)" ; labels as targets
-              2 font-lock-constant-face)
+            (list (concat "^[ \t]*\\([a-zA-Z0-9_]+[ \t]*:\\)[ \t]*\\($\\|{\\|\\<"
+                          cperl-after-label-regexp "\\>\\)")
+                  1 font-lock-constant-face)  ; labels
+            (list (concat "\\<" cperl-before-label-regexp
+                          "\\>[ \t]+\\([a-zA-Z0-9_:]+\\)")
+                  1 font-lock-constant-face) ; labels as targets
             ;; Uncomment to get perl-mode-like vars
             ;;; '("[$*]{?\\(\\sw+\\)" 1 font-lock-variable-name-face)
             ;;; '("\\([@%]\\|\\$#\\)\\(\\sw+\\)"
