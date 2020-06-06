@@ -1320,6 +1320,16 @@ Should contain exactly one group.")
   '("sub")
   "Keywords starting a subroutine in Perl core")
 
+(defvar cperl-core-block-init-keywords
+  '("for" "foreach" "if" "unless" "until" "while")
+  "Keywords which start a conditional/loop"
+  )
+
+(defvar cperl-core-block-continuation-keywords
+  '("else" "elsif" "continue")
+  "Keywords which continue control flow with another block"
+  )
+
 (defvar cperl-core-declaring-keywords
   '("local" "my" "our" "state")
   "Keywords preceding variable names"
@@ -1328,22 +1338,23 @@ Should contain exactly one group.")
 (defvar cperl-core-flow-control-keywords
   (append cperl-core-sub-keywords
           cperl-core-declaring-keywords
+          cperl-core-block-init-keywords
+          cperl-core-block-continuation-keywords
           '(
             "BEGIN" "CHECK" "END" "INIT" "UNITCHECK"
             "break"
-            "catch" "continue"
+            "catch"
             "default" "die" "do"
-            "elsif" "else" "eval" "evalbytes" "exec" "exit"
+            "eval" "evalbytes" "exec" "exit"
             "for" "foreach" "finally"
             "given" "goto"
-            "if"
             "last"
             "package"
             "next"
             "redo" "require" "return"
             "try"
-            "unless" "until" "use"
-            "while" "when"
+            "use"
+            "when"
             )
           )
   "Keywords for flow control"
@@ -1373,14 +1384,18 @@ Should contain exactly one group.")
   '("break" "continue" "goto" "last" "next" "redo")
   "Keywords which require a label as target")
 
-(defvar cperl-namespace-keywords       cperl-core-namespace-keywords)
-(defvar cperl-functions-for-font-lock  cperl-core-functions-for-font-lock)
-(defvar cperl-flow-control-keywords    cperl-core-flow-control-keywords)
-(defvar cperl-nonoverridable-functions cperl-core-nonoverridable-functions)
-(defvar cperl-sub-keywords             cperl-core-sub-keywords)
-(defvar cperl-after-label-keywords     cperl-core-after-label-keywords)
-(defvar cperl-before-label-keywords    cperl-core-before-label-keywords)
-(defvar cperl-declaring-keywords       cperl-core-declaring-keywords)
+(defvar cperl-namespace-keywords          cperl-core-namespace-keywords)
+(defvar cperl-functions-for-font-lock     cperl-core-functions-for-font-lock)
+(defvar cperl-flow-control-keywords       cperl-core-flow-control-keywords)
+(defvar cperl-nonoverridable-functions    cperl-core-nonoverridable-functions)
+(defvar cperl-sub-keywords                cperl-core-sub-keywords)
+(defvar cperl-after-label-keywords        cperl-core-after-label-keywords)
+(defvar cperl-before-label-keywords       cperl-core-before-label-keywords)
+(defvar cperl-declaring-keywords          cperl-core-declaring-keywords)
+(defvar cperl-block-init-keywords         cperl-core-block-init-keywords)
+(defvar cperl-block-continuation-keywords cperl-core-block-continuation-keywords)
+(defvar cperl-block-keywords (append      cperl-block-init-keywords
+                                          cperl-block-continuation-keywords))
 
 
 (defvar cperl-namespace-keywords-regexp (regexp-opt cperl-namespace-keywords))
@@ -1391,6 +1406,9 @@ Should contain exactly one group.")
 (defvar cperl-after-label-regexp        (regexp-opt cperl-after-label-keywords))
 (defvar cperl-before-label-regexp       (regexp-opt cperl-before-label-keywords))
 (defvar cperl-declaring-regexp          (regexp-opt cperl-declaring-keywords))
+(defvar cperl-block-init-regexp         (regexp-opt cperl-block-init-keywords))
+(defvar cperl-block-continuation-regexp (regexp-opt cperl-block-continuation-keywords))
+(defvar cperl-block-regexp              (regexp-opt cperl-block-keywords))
 
 (defun cperl-collect-keyword-regexps ()
   "Merge all keyword lists to optimized regular expressions which
@@ -5007,7 +5025,8 @@ Returns some position at the last line."
       ;;  }? continue
       ;;  blah; }
       (if (not
-           (or (looking-at "[ \t]*\\(els\\(e\\|if\\)\\|continue\\|if\\|while\\|for\\(each\\)?\\|until\\)")
+           (or (looking-at
+                (concat "[ \t]*" cperl-block-regexp "\\>"))
                (setq have-brace (save-excursion (search-forward "}" ee t)))))
           nil                           ; Do not need to do anything
         ;; Looking at:
@@ -5015,7 +5034,8 @@ Returns some position at the last line."
         ;; else
         (if cperl-merge-trailing-else
             (if (looking-at
-                 "[ \t]*}[ \t]*\n[ \t\n]*\\(els\\(e\\|if\\)\\|continue\\)\\>")
+                 (concat "[ \t]*}[ \t]*\n[ \t\n]*"
+                         cperl-block-continuation-regexp "\\>"))
                 (progn
                   (search-forward "}")
                   (setq p (point))
@@ -5023,7 +5043,9 @@ Returns some position at the last line."
                   (delete-region p (point))
               (insert (make-string cperl-indent-region-fix-constructs ?\s))
                   (beginning-of-line)))
-          (if (looking-at "[ \t]*}[ \t]*\\(els\\(e\\|if\\)\\|continue\\)\\>")
+          (if (looking-at
+               (concat "[ \t]*}[ \t]*"
+                       cperl-block-continuation-regexp "\\>"))
               (save-excursion
                   (search-forward "}")
                   (delete-horizontal-space)
@@ -5035,7 +5057,9 @@ Returns some position at the last line."
                         (setq ret (point)))))))
         ;; Looking at:
         ;; }     else
-        (if (looking-at "[ \t]*}\\(\t*\\|[ \t][ \t]+\\)\\<\\(els\\(e\\|if\\)\\|continue\\)\\>")
+        (if (looking-at
+             (concat "[ \t]*}\\(\t*\\|[ \t][ \t]+\\)\\<"
+                     cperl-block-continuation-regexp "\\>"))
             (progn
               (search-forward "}")
               (delete-horizontal-space)
@@ -5043,8 +5067,10 @@ Returns some position at the last line."
               (beginning-of-line)))
         ;; Looking at:
         ;; else   {
-        (if (looking-at
-             "[ \t]*}?[ \t]*\\<\\(els\\(e\\|if\\)\\|continue\\|unless\\|if\\|while\\|for\\(each\\)?\\|until\\)\\>\\(\t*\\|[ \t][ \t]+\\)[^ \t\n#]")
+            (if (looking-at
+                 (concat "[ \t]*}?[ \t]*\\<"
+                         cperl-block-regexp
+                         "\\>\\(\t*\\|[ \t][ \t]+\\)[^ \t\n#]"))
             (progn
               (forward-word-strictly 1)
               (delete-horizontal-space)
@@ -5052,8 +5078,10 @@ Returns some position at the last line."
               (beginning-of-line)))
         ;; Looking at:
         ;; foreach my    $var
-        (if (looking-at
-             "[ \t]*\\<for\\(each\\)?[ \t]+\\(state\\|my\\|local\\|our\\)\\(\t*\\|[ \t][ \t]+\\)[^ \t\n]")
+          (if (looking-at
+               (concat "[ \t]*\\<for\\(each\\)?[ \t]+"
+                       cperl-declaring-regexp
+                       "\\(\t*\\|[ \t][ \t]+\\)[^ \t\n]"))
             (progn
               (forward-word-strictly 2)
               (delete-horizontal-space)
@@ -5061,8 +5089,10 @@ Returns some position at the last line."
               (beginning-of-line)))
         ;; Looking at:
         ;; foreach my $var     (
-        (if (looking-at
-             "[ \t]*\\<for\\(each\\)?[ \t]+\\(state\\|my\\|local\\|our\\)[ \t]*\\$[_a-zA-Z0-9]+\\(\t*\\|[ \t][ \t]+\\)[^ \t\n#]")
+          (if (looking-at
+               (concat  "[ \t]*\\<for\\(each\\)?[ \t]+"
+                        cperl-declaring-regexp
+                        "[ \t]*\\$[_a-zA-Z0-9]+\\(\t*\\|[ \t][ \t]+\\)[^ \t\n#]"))
             (progn
               (forward-sexp 3)
               (delete-horizontal-space)
@@ -5071,10 +5101,14 @@ Returns some position at the last line."
               (beginning-of-line)))
         ;; Looking at (with or without "}" at start, ending after "({"):
         ;; } foreach my $var ()         OR   {
-        (if (looking-at
-             "[ \t]*\\(}[ \t]*\\)?\\<\\(els\\(e\\|if\\)\\|continue\\|if\\|unless\\|while\\|for\\(each\\)?\\(\\([ \t]+\\(state\\|my\\|local\\|our\\)\\)?[ \t]*\\$[_a-zA-Z0-9]+\\)?\\|until\\)\\>\\([ \t]*(\\|[ \t\n]*{\\)\\|[ \t]*{")
-            (progn
-              (setq ml (match-beginning 8)) ; "(" or "{" after control word
+          (if (looking-at
+               (concat "[ \t]*\\(}[ \t]*\\)?\\<"
+                       cperl-block-regexp
+                       "\\(\\([ \t]+"
+                       cperl-declaring-regexp
+                       "\\)?[ \t]*\\$[_a-zA-Z0-9]+\\)?\\>\\([ \t]*(\\|[ \t\n]*{\\)\\|[ \t]*{"))
+              (progn
+              (setq ml (match-beginning 4)) ; "(" or "{" after control word
               (re-search-forward "[({]")
               (forward-char -1)
               (setq p (point))
@@ -5157,7 +5191,10 @@ Returns some position at the last line."
         (if (and
              cperl-fix-hanging-brace-when-indent
              have-brace
-             (not (looking-at "[ \t]*}[ \t]*\\(\\<\\(els\\(if\\|e\\)\\|continue\\|while\\|until\\)\\>\\|$\\|#\\)"))
+             (not (looking-at
+                   (concat "[ \t]*}[ \t]*\\(\\<"
+                           cperl-block-continuation-regexp
+                           "\\>\\|$\\|#\\)")))
              (condition-case nil
                  (progn
                    (up-list 1)
