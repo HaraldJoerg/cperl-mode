@@ -1464,12 +1464,6 @@ the last)."
    "\\)?"                               ; END n+6=proto-group
    ))
 
-(defun cperl-char-ends-sub-keyword-p (char)
-  "Return t if CHAR is the last character of a perl sub keyword."
-  (cl-loop for keyword in cperl-sub-keywords
-           when (eq char (aref keyword (1- (length keyword))))
-           return t))
-
 ;; Details of groups in this are used in `cperl-imenu--create-perl-index'
 ;;  and `cperl-outline-level'.
 ;; Was: 2=sub|package; now 2=package-group, 5=package-name 8=sub-name (+3)
@@ -4822,14 +4816,13 @@ statement would start; thus the block in ${func()} does not count."
                     ;; else {}     but not    else::func {}
                     (or (and (looking-at "\\(else\\|catch\\|try\\|continue\\|grep\\|map\\|BEGIN\\|END\\|UNITCHECK\\|CHECK\\|INIT\\)\\>")
                              (not (looking-at "\\(\\sw\\|_\\)+::")))
-                        ;; sub f {}
+                        ;; sub f {}  or package My::Package { }
                         (progn
                           (cperl-backward-to-noncomment lim)
-                          (and (cperl-char-ends-sub-keyword-p (preceding-char))
                                (progn
                                  (forward-sexp -1)
                                  (looking-at
-                                  (concat cperl-sub-regexp "[ \t\n\f#]")))))))
+                                  (concat "\\(?:" cperl-sub-regexp "\\|package\\)[ \t\n\f#]"))))))
                 ;; What precedes is not word...  XXXX Last statement in sub???
                 (cperl-after-expr-p lim))))
       (error nil))))
