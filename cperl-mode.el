@@ -4819,10 +4819,11 @@ statement would start; thus the block in ${func()} does not count."
                         ;; sub f {}  or package My::Package { }
                         (progn
                           (cperl-backward-to-noncomment lim)
+                          (and (string-match "[[:alpha:]]" (string (preceding-char)))
                                (progn
                                  (forward-sexp -1)
                                  (looking-at
-                                  (concat "\\(?:" cperl-sub-regexp "\\|package\\)[ \t\n\f#]"))))))
+                                  (concat "\\(?:" cperl-sub-regexp "\\|package\\)[ \t\n\f#]")))))))
                 ;; What precedes is not word...  XXXX Last statement in sub???
                 (cperl-after-expr-p lim))))
       (error nil))))
