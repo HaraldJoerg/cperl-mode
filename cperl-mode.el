@@ -1330,6 +1330,17 @@ Should contain exactly one group.")
   "Keywords which continue control flow with another block"
   )
 
+(defvar cperl-core-named-block-keywords
+  '("BEGIN" "CHECK" "END" "INIT" "UNITCHECK")
+  "These keywords introduce a block which ends a statement
+   without 'sub', and without a semicolon"
+  )
+
+(defvar cperl-core-special-sub-keywords
+  '("AUTOLOAD" "DESTROY")
+  "Subroutines with predefined names"
+  )
+
 (defvar cperl-core-declaring-keywords
   '("local" "my" "our" "state")
   "Keywords preceding variable names"
@@ -1340,8 +1351,8 @@ Should contain exactly one group.")
           cperl-core-declaring-keywords
           cperl-core-block-init-keywords
           cperl-core-block-continuation-keywords
+          cperl-core-named-block-keywords
           '(
-            "BEGIN" "CHECK" "END" "INIT" "UNITCHECK"
             "break"
             "catch"
             "default" "die" "do"
@@ -1362,8 +1373,8 @@ Should contain exactly one group.")
 
 (defvar cperl-core-nonoverridable-functions
   (append cperl-core-flow-control-keywords
-  '("AUTOLOAD" "DESTROY"
-    "__END__" "__DATA__"
+          cperl-core-special-sub-keywords
+    '("__END__" "__DATA__"
     "catch" "chop" "chomp"
     "defined" "delete" "each"
     "exists" "format" "finally"
@@ -1396,7 +1407,8 @@ Should contain exactly one group.")
 (defvar cperl-block-continuation-keywords cperl-core-block-continuation-keywords)
 (defvar cperl-block-keywords (append      cperl-block-init-keywords
                                           cperl-block-continuation-keywords))
-
+(defvar cperl-named-block-keywords        cperl-core-named-block-keywords)
+(defvar cperl-special-sub-keywords        cperl-core-special-sub-keywords)
 
 (defvar cperl-namespace-keywords-regexp (regexp-opt cperl-namespace-keywords))
 (defvar cperl-functions-regexp          (regexp-opt cperl-functions-for-font-lock))
@@ -1409,6 +1421,8 @@ Should contain exactly one group.")
 (defvar cperl-block-init-regexp         (regexp-opt cperl-block-init-keywords))
 (defvar cperl-block-continuation-regexp (regexp-opt cperl-block-continuation-keywords))
 (defvar cperl-block-regexp              (regexp-opt cperl-block-keywords))
+(defvar cperl-named-block-regexp        (regexp-opt cperl-named-block-keywords))
+(defvar cperl-special-sub-regexp        (regexp-opt cperl-special-sub-keywords))
 
 (defun cperl-collect-keyword-regexps ()
   "Merge all keyword lists to optimized regular expressions which
@@ -1421,6 +1435,10 @@ Should contain exactly one group.")
         cperl-after-label-regexp           (regexp-opt cperl-after-label-keywords)
         cperl-before-label-regexp          (regexp-opt cperl-before-label-keywords)
         cperl-declaring-regexp             (regexp-opt cperl-declaring-keywords)
+        cperl-block-init-regexp            (regexp-opt cperl-block-init-keywords)
+        cperl-block-continuation-regexp    (regexp-opt cperl-block-continuation-keywords)
+        cperl-block-regexp                 (regexp-opt cperl-block-keywords)
+        cperl-named-block-regexp           (regexp-opt cperl-named-block-keywords)
         )
   )
 
@@ -1768,7 +1786,8 @@ or as help on variables `cperl-tips', `cperl-problems',
                cperl-sub-regexp
                (cperl-after-sub-regexp 'named 'attr-groups)
                "\\|"                    ; per toke.c
-               "\\(BEGIN\\|UNITCHECK\\|CHECK\\|INIT\\|END\\|AUTOLOAD\\|DESTROY\\)"
+               cperl-named-block-regexp
+               cperl-special-sub-regexp
                "\\)"
                cperl-maybe-white-and-comment-rex))
   (set (make-local-variable 'comment-indent-function) #'cperl-comment-indent)
@@ -4814,7 +4833,9 @@ statement would start; thus the block in ${func()} does not count."
                   (save-excursion
                     (forward-sexp -1)
                     ;; else {}     but not    else::func {}
-                    (or (and (looking-at "\\(else\\|catch\\|try\\|continue\\|grep\\|map\\|BEGIN\\|END\\|UNITCHECK\\|CHECK\\|INIT\\)\\>")
+                    (or (and (looking-at
+                              (concat "\\(" cperl-named-block-regexp
+                              "\\|\\(else\\|catch\\|try\\|continue\\|grep\\|map\\)\\)\\>"))
                              (not (looking-at "\\(\\sw\\|_\\)+::")))
                         ;; sub f {}  or package My::Package { }
                         (progn
