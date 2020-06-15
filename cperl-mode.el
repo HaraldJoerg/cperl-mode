@@ -8825,7 +8825,7 @@ do extra unwind via `cperl-unwind-to-safe'."
 (defvar cperl-moose-nonoverridable-functions
   '("accessor" "after" "around" "augment"
     "before" "blessed" "clearer" "confess"
-    "extends" "has" "inner" "is" "isa" "override"
+    "extends" "has" "inner" "override"
     "predicate" "super" "traits" "with")
   "New keywords introduced by Moose, mostly good enough for Moo as well.
    Keys in the 'has' declaration are highlighted to detect typos.")
@@ -8834,7 +8834,6 @@ do extra unwind via `cperl-unwind-to-safe'."
   '("extends" "has" "with")
   "Moose keywords followed by a namespace (quoted)"
   )
-
 
 (defun cperl-moose-add-keywords ()
   "Add moose keywords to the keyword lst and re-compile
