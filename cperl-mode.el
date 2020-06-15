@@ -1758,6 +1758,16 @@ or as help on variables `cperl-tips', `cperl-problems',
   (if (cperl-val 'cperl-electric-keywords)
       (abbrev-mode 1))
   (set-syntax-table cperl-mode-syntax-table)
+  ;; haj 2020-06-25: Autodetect keywords - a crude hack
+  (save-excursion
+    (goto-char (point-min))
+    (if
+        (re-search-forward "^[\t ]*\\(use\\|require\\)[\t ]+Moo\\(se\\)?\\W" nil t)
+        (cperl-moose-add-keywords)
+      (message "Drats.  No moose found in buffer.")
+      )
+    )
+  ;;  haj 2020-06-25: Autodetect keywords - end of hack
   ;; Until Emacs is multi-threaded, we do not actually need it local:
   (make-local-variable 'cperl-font-lock-multiline-start)
   (make-local-variable 'cperl-font-locking)
@@ -5643,6 +5653,9 @@ indentation and initial hashes.  Behaves usually outside of comment."
   "Additional expressions to highlight in Perl mode.  Default set.")
 (defvar cperl-font-lock-keywords-2 nil
   "Additional expressions to highlight in Perl mode.  Maximal set")
+(make-variable-buffer-local 'cperl-font-lock-keywords)
+(make-variable-buffer-local 'cperl-font-lock-keywords-1)
+(make-variable-buffer-local 'cperl-font-lock-keywords-2)
 
 (defun cperl-load-font-lock-keywords ()
   (or cperl-faces-init (cperl-init-faces))
@@ -8816,10 +8829,11 @@ do extra unwind via `cperl-unwind-to-safe'."
   "Moose keywords followed by a namespace (quoted)"
   )
 
-(defun cperl-moose-activate-keywords ()
-  "Add Moose keywords to the keyword list, and re-compile
+
+(defun cperl-moose-add-keywords ()
+  "Add moose keywords to the keyword lst and re-compile
   the regular expressions used by cperl-mode."
-  (interactive)
+  (message "Adding moose keywords.")
   (dolist (keyword cperl-moose-nonoverridable-functions)
     (add-to-list 'cperl-nonoverridable-functions keyword)
     )
@@ -8828,6 +8842,12 @@ do extra unwind via `cperl-unwind-to-safe'."
     )
   (cperl-collect-keyword-regexps)
   (setq cperl-faces-init nil)
+  )
+
+(defun cperl-moose-activate-keywords ()
+  "Add and activate Moose keywords in this buffer."
+  (interactive)
+  (cperl-moose-add-keywords)
   (cperl-mode)
   )
 
