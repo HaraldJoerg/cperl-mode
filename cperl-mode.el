@@ -5689,8 +5689,8 @@ indentation and initial hashes.  Behaves usually outside of comment."
               "\\(?:^\\|[^$@%&\\]\\)\\<\\("
               cperl-flow-control-regexp
               "\\)\\>") 1)              ; was "\\)[ \n\t;():,|&]"
-            ; In what follows we use `type' style
-            ; for overwritable builtins
+                                        ; In what follows we use `type' style
+                                        ; for overwritable builtins
             (list
              (concat
               "\\(?:^\\|[^$@%&\\]\\)\\<\\("
@@ -5714,8 +5714,8 @@ indentation and initial hashes.  Behaves usually outside of comment."
                           cperl-white-and-comment-rex ; whitespace/comments
                           "\\([^ \n\t{;()]+\\)" ; 2=name (assume non-anonymous)
                           "\\("
-                            cperl-maybe-white-and-comment-rex ;whitespace/comments?
-                            "([^()]*)\\)?" ; prototype
+                          cperl-maybe-white-and-comment-rex ;whitespace/comments?
+                          "([^()]*)\\)?" ; prototype
                           cperl-maybe-white-and-comment-rex ; whitespace/comments?
                           "[{;]")
                   2 (if cperl-font-lock-multiline
@@ -5732,9 +5732,9 @@ indentation and initial hashes.  Behaves usually outside of comment."
                          (if (eq (char-after (cperl-1- (match-end 0))) ?\{ )
                              'font-lock-function-name-face
                            'font-lock-variable-name-face))))
-        (list (concat "\\<" cperl-namespace-keywords-regexp
-                      "[ \t]+\\([a-zA-Z_][a-zA-Z_0-9:]*\\)[ \t;]")
-              1 font-lock-function-name-face) ; require A if B;
+            (list (concat "\\<" cperl-namespace-keywords-regexp
+                          "[ \t]+\\([a-zA-Z_][a-zA-Z_0-9:]*\\)[ \t;]")
+                  1 font-lock-function-name-face) ; require A if B;
             '("^[ \t]*format[ \t]+\\([a-zA-Z_][a-zA-Z_0-9:]*\\)[ \t]*=[ \t]*$"
               1 font-lock-function-name-face)
             (cond ((featurep 'font-lock-extra)
@@ -5772,53 +5772,53 @@ indentation and initial hashes.  Behaves usually outside of comment."
                   (font-lock-anchored
                    ;; 1=my_etc, 2=white? 3=(+white? 4=white? 5=var
                    `(,(concat "\\<\\(state\\|my\\|local\\|our\\)"
-                                  cperl-maybe-white-and-comment-rex
-                                  "\\(("
-                                     cperl-maybe-white-and-comment-rex
-                                  "\\)?\\([$@%*]\\([a-zA-Z0-9_:]+\\|[^a-zA-Z0-9_]\\)\\)")
-                       (5 ,(if cperl-font-lock-multiline
-                                 'font-lock-variable-name-face
-                               '(progn  (setq cperl-font-lock-multiline-start
-                                              (match-beginning 0))
-                                        'font-lock-variable-name-face)))
-                       (,(concat "\\="
-                                   cperl-maybe-white-and-comment-rex
-                                   ","
-                                   cperl-maybe-white-and-comment-rex
-                                   "\\([$@%*]\\([a-zA-Z0-9_:]+\\|[^a-zA-Z0-9_]\\)\\)")
-                        ;; Bug in font-lock: limit is used not only to limit
-                        ;; searches, but to set the "extend window for
-                        ;; facification" property.  Thus we need to minimize.
-                        ,(if cperl-font-lock-multiline
-                             '(if (match-beginning 3)
-                                  (save-excursion
-                                    (goto-char (match-beginning 3))
-                                    (condition-case nil
-                                        (forward-sexp 1)
-                                      (error
-                                       (condition-case nil
-                                           (forward-char 200)
-                                         (error nil)))) ; typeahead
-                                    (1- (point))) ; report limit
-                                (forward-char -2)) ; disable continued expr
-                             '(if (match-beginning 3)
-                                  (point-max) ; No limit for continuation
-                                (forward-char -2))) ; disable continued expr
-                        ,(if cperl-font-lock-multiline
-                               nil
-                             '(progn    ; Do at end
-                                ;; "my" may be already fontified (POD),
-                                ;; so cperl-font-lock-multiline-start is nil
-                                (if (or (not cperl-font-lock-multiline-start)
-                                        (> 2 (count-lines
-                                              cperl-font-lock-multiline-start
-                                              (point))))
-                                    nil
-                                  (put-text-property
-                                   (1+ cperl-font-lock-multiline-start) (point)
-                                   'syntax-type 'multiline))
-                                (setq cperl-font-lock-multiline-start nil)))
-                        (3 font-lock-variable-name-face))))
+                              cperl-maybe-white-and-comment-rex
+                              "\\(("
+                              cperl-maybe-white-and-comment-rex
+                              "\\)?\\([$@%*]\\([a-zA-Z0-9_:]+\\|[^a-zA-Z0-9_]\\)\\)")
+                     (5 ,(if cperl-font-lock-multiline
+                             'font-lock-variable-name-face
+                           '(progn  (setq cperl-font-lock-multiline-start
+                                          (match-beginning 0))
+                                    'font-lock-variable-name-face)))
+                     (,(concat "\\="
+                               cperl-maybe-white-and-comment-rex
+                               ","
+                               cperl-maybe-white-and-comment-rex
+                               "\\([$@%*]\\([a-zA-Z0-9_:]+\\|[^a-zA-Z0-9_]\\)\\)")
+                      ;; Bug in font-lock: limit is used not only to limit
+                      ;; searches, but to set the "extend window for
+                      ;; facification" property.  Thus we need to minimize.
+                      ,(if cperl-font-lock-multiline
+                           '(if (match-beginning 3)
+                                (save-excursion
+                                  (goto-char (match-beginning 3))
+                                  (condition-case nil
+                                      (forward-sexp 1)
+                                    (error
+                                     (condition-case nil
+                                         (forward-char 200)
+                                       (error nil)))) ; typeahead
+                                  (1- (point))) ; report limit
+                              (forward-char -2)) ; disable continued expr
+                         '(if (match-beginning 3)
+                              (point-max) ; No limit for continuation
+                            (forward-char -2))) ; disable continued expr
+                      ,(if cperl-font-lock-multiline
+                           nil
+                         '(progn    ; Do at end
+                            ;; "my" may be already fontified (POD),
+                            ;; so cperl-font-lock-multiline-start is nil
+                            (if (or (not cperl-font-lock-multiline-start)
+                                    (> 2 (count-lines
+                                          cperl-font-lock-multiline-start
+                                          (point))))
+                                nil
+                              (put-text-property
+                               (1+ cperl-font-lock-multiline-start) (point)
+                               'syntax-type 'multiline))
+                            (setq cperl-font-lock-multiline-start nil)))
+                      (3 font-lock-variable-name-face))))
                   (t '("^[ \t{}]*\\(state\\|my\\|local\\|our\\)[ \t]*\\(([ \t]*\\)?\\([$@%*][a-zA-Z0-9_:]+\\)"
                        3 font-lock-variable-name-face)))
             '("\\<for\\(each\\)?\\([ \t]+\\(state\\|my\\|local\\|our\\)\\)?[ \t]*\\(\\$[a-zA-Z_][a-zA-Z_0-9]*\\)[ \t]*("
@@ -5848,7 +5848,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
              ("\\(%\\)\\(\\$+\\([a-zA-Z_:][a-zA-Z0-9_:]*\\|[^ \t\n]\\)\\)"
               (1 'cperl-hash-face)
               (2 font-lock-variable-name-face))
-;;("\\([smy]\\|tr\\)\\([^a-z_A-Z0-9]\\)\\(\\([^\n\\]*||\\)\\)\\2")
+             ;;("\\([smy]\\|tr\\)\\([^a-z_A-Z0-9]\\)\\(\\([^\n\\]*||\\)\\)\\2")
 ;;; Too much noise from \s* @s[ and friends
              ;;("\\(\\<\\([msy]\\|tr\\)[ \t]*\\([^ \t\na-zA-Z0-9_]\\)\\|\\(/\\)\\)"
              ;;(3 font-lock-function-name-face t t)
@@ -5868,8 +5868,8 @@ indentation and initial hashes.  Behaves usually outside of comment."
                   t-font-lock-keywords)
                 cperl-font-lock-keywords cperl-font-lock-keywords-1
                 cperl-font-lock-keywords-2 (append
-                                           cperl-font-lock-keywords-1
-                                           t-font-lock-keywords-1)))
+                                            cperl-font-lock-keywords-1
+                                            t-font-lock-keywords-1)))
         (if (fboundp 'ps-print-buffer) (cperl-ps-print-init))
         (if (or (featurep 'choose-color) (featurep 'font-lock-extra))
             (eval                       ; Avoid a warning
@@ -5915,7 +5915,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
                 (list 'font-lock-warning-face
                       ["Pink"           "Red"           "Gray50"        "LightGray"]
                       ["gray20"                 "gray90"
-                                                        "gray80"        "gray20"]
+                       "gray80"        "gray20"]
                       [nil              nil             t               t       t]
                       nil
                       [nil              nil             t               t       t]
@@ -8794,7 +8794,7 @@ do extra unwind via `cperl-unwind-to-safe'."
 
 ;;;; cperl-mode extensions for non-core keyword sets
 ;;;;
-;;;; Perl lives.  Modiles and versions enable new keywords all the time.
+;;;; Perl lives.  Modules and versions enable new keywords all the time.
 ;;;; Here's a plan to make cperl-mode flexible enough:
 ;;;;
 ;;;;  - Each new sets of keywords has a name (like we've been using "core"
