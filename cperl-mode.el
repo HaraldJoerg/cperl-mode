@@ -1396,34 +1396,39 @@ Should contain exactly one group.")
   '("break" "continue" "goto" "last" "next" "redo")
   "Keywords which require a label as target")
 
-(defvar cperl-namespace-keywords          cperl-core-namespace-keywords)
-(defvar cperl-functions-for-font-lock     cperl-core-functions-for-font-lock)
-(defvar cperl-flow-control-keywords       cperl-core-flow-control-keywords)
-(defvar cperl-nonoverridable-functions    cperl-core-nonoverridable-functions)
-(defvar cperl-sub-keywords                cperl-core-sub-keywords)
-(defvar cperl-after-label-keywords        cperl-core-after-label-keywords)
-(defvar cperl-before-label-keywords       cperl-core-before-label-keywords)
-(defvar cperl-declaring-keywords          cperl-core-declaring-keywords)
-(defvar cperl-block-init-keywords         cperl-core-block-init-keywords)
-(defvar cperl-block-continuation-keywords cperl-core-block-continuation-keywords)
-(defvar cperl-block-keywords (append      cperl-block-init-keywords
-                                          cperl-block-continuation-keywords))
-(defvar cperl-named-block-keywords        cperl-core-named-block-keywords)
-(defvar cperl-special-sub-keywords        cperl-core-special-sub-keywords)
+;; Following are the initial values for keyword lists and regular expressions.
+;; All of them are buffer-local so that keyword sets can be added per buffer,
+;; and regular expressions derived from these keyword sets remain buffer-local
+;; for fontification.
+(defvar-local cperl-namespace-keywords          cperl-core-namespace-keywords)
+(defvar-local cperl-functions-for-font-lock     cperl-core-functions-for-font-lock)
+(defvar-local cperl-flow-control-keywords       cperl-core-flow-control-keywords)
+(defvar-local cperl-nonoverridable-functions    cperl-core-nonoverridable-functions)
+(defvar-local cperl-sub-keywords                cperl-core-sub-keywords)
+(defvar-local cperl-after-label-keywords        cperl-core-after-label-keywords)
+(defvar-local cperl-before-label-keywords       cperl-core-before-label-keywords)
+(defvar-local cperl-declaring-keywords          cperl-core-declaring-keywords)
+(defvar-local cperl-block-init-keywords         cperl-core-block-init-keywords)
+(defvar-local cperl-block-continuation-keywords cperl-core-block-continuation-keywords)
+(defvar-local cperl-block-keywords (append      cperl-block-init-keywords
+                                                cperl-block-continuation-keywords))
+(defvar-local cperl-named-block-keywords        cperl-core-named-block-keywords)
+(defvar-local cperl-special-sub-keywords        cperl-core-special-sub-keywords)
 
-(defvar cperl-namespace-keywords-regexp (regexp-opt cperl-namespace-keywords))
-(defvar cperl-functions-regexp          (regexp-opt cperl-functions-for-font-lock))
-(defvar cperl-flow-control-regexp       (regexp-opt cperl-flow-control-keywords))
-(defvar cperl-nonoverridable-regexp     (regexp-opt cperl-nonoverridable-functions))
-(defvar cperl-sub-regexp                (regexp-opt cperl-sub-keywords))
-(defvar cperl-after-label-regexp        (regexp-opt cperl-after-label-keywords))
-(defvar cperl-before-label-regexp       (regexp-opt cperl-before-label-keywords))
-(defvar cperl-declaring-regexp          (regexp-opt cperl-declaring-keywords))
-(defvar cperl-block-init-regexp         (regexp-opt cperl-block-init-keywords))
-(defvar cperl-block-continuation-regexp (regexp-opt cperl-block-continuation-keywords))
-(defvar cperl-block-regexp              (regexp-opt cperl-block-keywords))
-(defvar cperl-named-block-regexp        (regexp-opt cperl-named-block-keywords))
-(defvar cperl-special-sub-regexp        (regexp-opt cperl-special-sub-keywords))
+(defvar-local cperl-namespace-keywords-regexp (regexp-opt cperl-namespace-keywords))
+(defvar-local cperl-functions-regexp          (regexp-opt cperl-functions-for-font-lock))
+(defvar-local cperl-flow-control-regexp       (regexp-opt cperl-flow-control-keywords))
+(defvar-local cperl-nonoverridable-regexp     (regexp-opt cperl-nonoverridable-functions))
+(defvar-local cperl-sub-regexp                (regexp-opt cperl-sub-keywords))
+(defvar-local cperl-after-label-regexp        (regexp-opt cperl-after-label-keywords))
+(defvar-local cperl-before-label-regexp       (regexp-opt cperl-before-label-keywords))
+(defvar-local cperl-declaring-regexp          (regexp-opt cperl-declaring-keywords))
+(defvar-local cperl-block-init-regexp         (regexp-opt cperl-block-init-keywords))
+(defvar-local cperl-block-continuation-regexp (regexp-opt cperl-block-continuation-keywords))
+(defvar-local cperl-block-regexp              (regexp-opt cperl-block-keywords))
+(defvar-local cperl-named-block-regexp        (regexp-opt cperl-named-block-keywords))
+(defvar-local cperl-special-sub-regexp        (regexp-opt cperl-special-sub-keywords))
+
 
 (defun cperl-collect-keyword-regexps ()
   "Merge all keyword lists to optimized regular expressions which
@@ -1552,6 +1557,7 @@ the last)."
 
 
 (defvar cperl-faces-init nil)
+(make-variable-buffer-local 'cperl-faces-init)
 ;; Fix for msb.el
 (defvar cperl-msb-fixed nil)
 (defvar cperl-use-major-mode 'cperl-mode)
