@@ -1275,7 +1275,8 @@ Should contain exactly one group.")
 "Regular expression to match whitespace with interspersed comments.
 Should contain exactly one group.")
 
-;;; Perl keywords and regular expressions
+;;;; Perl core keywords and regular expressions
+
 (defvar cperl-core-namespace-keywords
   '("package" "require" "use" "no" "bootstrap")
   "Keywords which introduce a namespace in Perl")
@@ -8790,6 +8791,52 @@ do extra unwind via `cperl-unwind-to-safe'."
     (string-match ":\\s *\\([0-9.]+\\)" v)
     (substring v (match-beginning 1) (match-end 1)))
   "Version of IZ-supported CPerl package this file is based on.")
+
+;;;; cperl-mode extensions for non-core keyword sets
+;;;;
+;;;; Perl lives.  Modiles and versions enable new keywords all the time.
+;;;; Here's a plan to make cperl-mode flexible enough:
+;;;;
+;;;;  - Each new sets of keywords has a name (like we've been using "core"
+;;;;    above
+;;;;  - The set comes with a command cperl-enable-<foo>-keywords.
+;;;;    There's no disabling yet.
+
+;;; Moose keywords
+(defvar cperl-moose-nonoverridable-functions
+  '("accessor" "after" "around" "augment"
+    "before" "blessed" "clearer" "confess"
+    "extends" "has" "inner" "is" "isa" "override"
+    "predicate" "super" "traits" "with")
+  "New keywords introduced by Moose, mostly good enough for Moo as well.
+   Keys in the 'has' declaration are highlighted to detect typos.")
+
+(defvar cperl-moose-flow-control-keywords
+  '("extends" "has" "with")
+  "These keywords aren't flow control, but they start a statement."
+  )
+(defvar cperl-moose-namespace-keywords
+  '("extends" "has" "with")
+  "Moose keywords followed by a namespace (quoted)"
+  )
+
+(defun cperl-moose-activate-keywords ()
+  "Add Moose keywords to the keyword list, and re-compile
+  the regular expressions used by cperl-mode."
+  (interactive)
+  (dolist (keyword cperl-moose-nonoverridable-functions)
+    (add-to-list 'cperl-nonoverridable-functions keyword)
+    )
+  (dolist (keyword cperl-moose-flow-control-keywords)
+    (add-to-list 'cperl-flow-control-keywords keyword)
+    )
+  (dolist (keyword cperl-moose-namespace-keywords)
+    (add-to-list 'cperl-namespace-keywords keyword)
+    )
+  (cperl-collect-keyword-regexps)
+  (setq cperl-faces-init nil)
+  (cperl-init-faces)
+  )
 
 (provide 'cperl-mode)
 
