@@ -8811,10 +8811,6 @@ do extra unwind via `cperl-unwind-to-safe'."
   "New keywords introduced by Moose, mostly good enough for Moo as well.
    Keys in the 'has' declaration are highlighted to detect typos.")
 
-(defvar cperl-moose-flow-control-keywords
-  '("extends" "has" "with")
-  "These keywords aren't flow control, but they start a statement."
-  )
 (defvar cperl-moose-namespace-keywords
   '("extends" "has" "with")
   "Moose keywords followed by a namespace (quoted)"
@@ -8827,15 +8823,12 @@ do extra unwind via `cperl-unwind-to-safe'."
   (dolist (keyword cperl-moose-nonoverridable-functions)
     (add-to-list 'cperl-nonoverridable-functions keyword)
     )
-  (dolist (keyword cperl-moose-flow-control-keywords)
-    (add-to-list 'cperl-flow-control-keywords keyword)
-    )
   (dolist (keyword cperl-moose-namespace-keywords)
     (add-to-list 'cperl-namespace-keywords keyword)
     )
   (cperl-collect-keyword-regexps)
   (setq cperl-faces-init nil)
-  (cperl-init-faces)
+  (cperl-mode)
   )
 
 (provide 'cperl-mode)
