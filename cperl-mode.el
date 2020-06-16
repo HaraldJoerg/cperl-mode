@@ -1415,36 +1415,37 @@ Should contain exactly one group.")
 (defvar-local cperl-named-block-keywords        cperl-core-named-block-keywords)
 (defvar-local cperl-special-sub-keywords        cperl-core-special-sub-keywords)
 
-(defvar-local cperl-namespace-keywords-regexp (regexp-opt cperl-namespace-keywords))
-(defvar-local cperl-functions-regexp          (regexp-opt cperl-functions-for-font-lock))
-(defvar-local cperl-flow-control-regexp       (regexp-opt cperl-flow-control-keywords))
-(defvar-local cperl-nonoverridable-regexp     (regexp-opt cperl-nonoverridable-functions))
-(defvar-local cperl-sub-regexp                (regexp-opt cperl-sub-keywords))
-(defvar-local cperl-after-label-regexp        (regexp-opt cperl-after-label-keywords))
-(defvar-local cperl-before-label-regexp       (regexp-opt cperl-before-label-keywords))
-(defvar-local cperl-declaring-regexp          (regexp-opt cperl-declaring-keywords))
-(defvar-local cperl-block-init-regexp         (regexp-opt cperl-block-init-keywords))
-(defvar-local cperl-block-continuation-regexp (regexp-opt cperl-block-continuation-keywords))
-(defvar-local cperl-block-regexp              (regexp-opt cperl-block-keywords))
-(defvar-local cperl-named-block-regexp        (regexp-opt cperl-named-block-keywords))
-(defvar-local cperl-special-sub-regexp        (regexp-opt cperl-special-sub-keywords))
+(defvar-local cperl--namespace-keywords-regexp (regexp-opt cperl-namespace-keywords))
+(defvar-local cperl--functions-regexp          (regexp-opt cperl-functions-for-font-lock))
+(defvar-local cperl--flow-control-regexp       (regexp-opt cperl-flow-control-keywords))
+(defvar-local cperl--nonoverridable-regexp     (regexp-opt cperl-nonoverridable-functions))
+(defvar-local cperl--sub-regexp                (regexp-opt cperl-sub-keywords))
+(defvar-local cperl--after-label-regexp        (regexp-opt cperl-after-label-keywords))
+(defvar-local cperl--before-label-regexp       (regexp-opt cperl-before-label-keywords))
+(defvar-local cperl--declaring-regexp          (regexp-opt cperl-declaring-keywords))
+(defvar-local cperl--block-init-regexp         (regexp-opt cperl-block-init-keywords))
+(defvar-local cperl--block-continuation-regexp (regexp-opt cperl-block-continuation-keywords))
+(defvar-local cperl--block-regexp              (regexp-opt cperl-block-keywords))
+(defvar-local cperl--named-block-regexp        (regexp-opt cperl-named-block-keywords))
+(defvar-local cperl--special-sub-regexp        (regexp-opt cperl-special-sub-keywords))
 
 
 (defun cperl-collect-keyword-regexps ()
   "Merge all keyword lists to optimized regular expressions which
    will actually be used by cperl-mode."
-  (setq cperl-namespace-keywords-regexp    (regexp-opt cperl-namespace-keywords)
-        cperl-functions-regexp             (regexp-opt cperl-functions-for-font-lock)
-        cperl-flow-control-regexp          (regexp-opt cperl-flow-control-keywords)
-        cperl-nonoverridable-regexp        (regexp-opt cperl-nonoverridable-functions)
-        cperl-sub-regexp                   (regexp-opt cperl-sub-keywords)
-        cperl-after-label-regexp           (regexp-opt cperl-after-label-keywords)
-        cperl-before-label-regexp          (regexp-opt cperl-before-label-keywords)
-        cperl-declaring-regexp             (regexp-opt cperl-declaring-keywords)
-        cperl-block-init-regexp            (regexp-opt cperl-block-init-keywords)
-        cperl-block-continuation-regexp    (regexp-opt cperl-block-continuation-keywords)
-        cperl-block-regexp                 (regexp-opt cperl-block-keywords)
-        cperl-named-block-regexp           (regexp-opt cperl-named-block-keywords)
+  (setq cperl--namespace-keywords-regexp    (regexp-opt cperl-namespace-keywords)
+        cperl--functions-regexp             (regexp-opt cperl-functions-for-font-lock)
+        cperl--flow-control-regexp          (regexp-opt cperl-flow-control-keywords)
+        cperl--nonoverridable-regexp        (regexp-opt cperl-nonoverridable-functions)
+        cperl--sub-regexp                   (regexp-opt cperl-sub-keywords)
+        cperl--after-label-regexp           (regexp-opt cperl-after-label-keywords)
+        cperl--before-label-regexp          (regexp-opt cperl-before-label-keywords)
+        cperl--declaring-regexp             (regexp-opt cperl-declaring-keywords)
+        cperl--block-init-regexp            (regexp-opt cperl-block-init-keywords)
+        cperl--block-continuation-regexp    (regexp-opt cperl-block-continuation-keywords)
+        cperl--block-regexp                 (regexp-opt cperl-block-keywords)
+        cperl--named-block-regexp           (regexp-opt cperl-named-block-keywords)
+        cperl--special-sub-regexp           (regexp-opt cperl-special-sub-keywords)
         )
   )
 
@@ -1500,7 +1501,7 @@ the last)."
                "\\([a-zA-Z_0-9:']+\\)\\)?\\)" ; 5 = package-name
        "\\|"
           "[ \t]*"
-          cperl-sub-regexp
+          cperl--sub-regexp
           (cperl-after-sub-regexp 'named nil) ; 8=name 11=proto 14=attr-start
           cperl-maybe-white-and-comment-rex     ; 15=pre-block
    "\\|"
@@ -1765,12 +1766,12 @@ or as help on variables `cperl-tips', `cperl-problems',
       (abbrev-mode 1))
   (set-syntax-table cperl-mode-syntax-table)
   ;; haj 2020-06-25: Autodetect keywords - a crude hack
+  ;; This ought to be replaced by a hook into which keyword sets can jump in
   (save-excursion
     (goto-char (point-min))
-    (if
+    (when
         (re-search-forward "^[\t ]*\\(use\\|require\\)[\t ]+Moo\\(se\\)?\\W" nil t)
         (cperl-moose-add-keywords)
-      (message "Drats.  No moose found in buffer.")
       )
     )
   ;;  haj 2020-06-25: Autodetect keywords - end of hack
@@ -1800,11 +1801,11 @@ or as help on variables `cperl-tips', `cperl-problems',
 ;;        cperl-maybe-white-and-comment-rex     ; 15=pre-block
   (set (make-local-variable 'defun-prompt-regexp)
        (concat "^[ \t]*\\("
-               cperl-sub-regexp
+               cperl--sub-regexp
                (cperl-after-sub-regexp 'named 'attr-groups)
                "\\|"                    ; per toke.c
-               cperl-named-block-regexp
-               cperl-special-sub-regexp
+               cperl--named-block-regexp
+               cperl--special-sub-regexp
                "\\)"
                cperl-maybe-white-and-comment-rex))
   (set (make-local-variable 'comment-indent-function) #'cperl-comment-indent)
@@ -2972,7 +2973,7 @@ Will not look before LIM."
                                                 (point) 'attrib-group)))
                                    ((eq (preceding-char) ?b)
                                     (forward-sexp -1)
-                                    (looking-at (concat cperl-sub-regexp "\\>"))))
+                                    (looking-at (concat cperl--sub-regexp "\\>"))))
                              (setq p (nth 1 ; start of innermost containing list
                                           (parse-partial-sexp
                                            (point-at-bol)
@@ -3758,7 +3759,7 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
                 "\\([?/<]\\)"   ; /blah/ or ?blah? or <file*glob>
                 "\\|"
                 ;; 1+6+2+1+1=11 extra () before this
-                "\\<" cperl-sub-regexp "\\>" ;  sub with proto/attr
+                "\\<" cperl--sub-regexp "\\>" ;  sub with proto/attr
                 "\\("
                    cperl-white-and-comment-rex
                    "\\(::[a-zA-Z_:'0-9]*\\|[a-zA-Z_'][a-zA-Z_:'0-9]*\\)\\)?" ; name
@@ -3771,7 +3772,7 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
                 "\\|"
                 ;; 1+6+2+1+1+6+1=18 extra () before this (old pack'var syntax;
                 ;; we do not support intervening comments...):
-                "\\(\\<" cperl-sub-regexp "[ \t\n\f]+\\|[&*$@%]\\)[a-zA-Z0-9_]*'"
+                "\\(\\<" cperl--sub-regexp "[ \t\n\f]+\\|[&*$@%]\\)[a-zA-Z0-9_]*'"
                 ;; 1+6+2+1+1+6+1+1=19 extra () before this:
                 "\\|"
                 "__\\(END\\|DATA\\)__"  ; __END__ or __DATA__
@@ -4821,7 +4822,7 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
                    (and (eq (preceding-char) ?b)
                         (progn
                           (forward-sexp -1)
-                          (looking-at (concat cperl-sub-regexp "[ \t\n\f#]"))))))))))
+                          (looking-at (concat cperl--sub-regexp "[ \t\n\f#]"))))))))))
 
 ;; What is the difference of (cperl-after-block-p lim t) and (cperl-block-p)?
 ;; No save-excursion; condition-case ...  In (cperl-block-p) the block
@@ -4851,7 +4852,7 @@ statement would start; thus the block in ${func()} does not count."
                     (forward-sexp -1)
                     ;; else {}     but not    else::func {}
                     (or (and (looking-at
-                              (concat "\\(" cperl-named-block-regexp
+                              (concat "\\(" cperl--named-block-regexp
                               "\\|\\(else\\|catch\\|try\\|continue\\|grep\\|map\\)\\)\\>"))
                              (not (looking-at "\\(\\sw\\|_\\)+::")))
                         ;; sub f {}  or package My::Package { }
@@ -4861,7 +4862,7 @@ statement would start; thus the block in ${func()} does not count."
                                (progn
                                  (forward-sexp -1)
                                  (looking-at
-                                  (concat "\\(?:" cperl-sub-regexp "\\|package\\)[ \t\n\f#]")))))))
+                                  (concat "\\(?:" cperl--sub-regexp "\\|package\\)[ \t\n\f#]")))))))
                 ;; What precedes is not word...  XXXX Last statement in sub???
                 (cperl-after-expr-p lim))))
       (error nil))))
@@ -5058,7 +5059,7 @@ Returns some position at the last line."
       ;;  blah; }
       (if (not
            (or (looking-at
-                (concat "[ \t]*" cperl-block-regexp "\\>"))
+                (concat "[ \t]*" cperl--block-regexp "\\>"))
                (setq have-brace (save-excursion (search-forward "}" ee t)))))
           nil                           ; Do not need to do anything
         ;; Looking at:
@@ -5067,7 +5068,7 @@ Returns some position at the last line."
         (if cperl-merge-trailing-else
             (if (looking-at
                  (concat "[ \t]*}[ \t]*\n[ \t\n]*"
-                         cperl-block-continuation-regexp "\\>"))
+                         cperl--block-continuation-regexp "\\>"))
                 (progn
                   (search-forward "}")
                   (setq p (point))
@@ -5077,7 +5078,7 @@ Returns some position at the last line."
                   (beginning-of-line)))
           (if (looking-at
                (concat "[ \t]*}[ \t]*"
-                       cperl-block-continuation-regexp "\\>"))
+                       cperl--block-continuation-regexp "\\>"))
               (save-excursion
                   (search-forward "}")
                   (delete-horizontal-space)
@@ -5091,7 +5092,7 @@ Returns some position at the last line."
         ;; }     else
         (if (looking-at
              (concat "[ \t]*}\\(\t*\\|[ \t][ \t]+\\)\\<"
-                     cperl-block-continuation-regexp "\\>"))
+                     cperl--block-continuation-regexp "\\>"))
             (progn
               (search-forward "}")
               (delete-horizontal-space)
@@ -5101,7 +5102,7 @@ Returns some position at the last line."
         ;; else   {
             (if (looking-at
                  (concat "[ \t]*}?[ \t]*\\<"
-                         cperl-block-regexp
+                         cperl--block-regexp
                          "\\>\\(\t*\\|[ \t][ \t]+\\)[^ \t\n#]"))
             (progn
               (forward-word-strictly 1)
@@ -5112,7 +5113,7 @@ Returns some position at the last line."
         ;; foreach my    $var
           (if (looking-at
                (concat "[ \t]*\\<for\\(each\\)?[ \t]+"
-                       cperl-declaring-regexp
+                       cperl--declaring-regexp
                        "\\(\t*\\|[ \t][ \t]+\\)[^ \t\n]"))
             (progn
               (forward-word-strictly 2)
@@ -5123,7 +5124,7 @@ Returns some position at the last line."
         ;; foreach my $var     (
           (if (looking-at
                (concat  "[ \t]*\\<for\\(each\\)?[ \t]+"
-                        cperl-declaring-regexp
+                        cperl--declaring-regexp
                         "[ \t]*\\$[_a-zA-Z0-9]+\\(\t*\\|[ \t][ \t]+\\)[^ \t\n#]"))
             (progn
               (forward-sexp 3)
@@ -5135,9 +5136,9 @@ Returns some position at the last line."
         ;; } foreach my $var ()         OR   {
           (if (looking-at
                (concat "[ \t]*\\(}[ \t]*\\)?\\<"
-                       cperl-block-regexp
+                       cperl--block-regexp
                        "\\(\\([ \t]+"
-                       cperl-declaring-regexp
+                       cperl--declaring-regexp
                        "\\)?[ \t]*\\$[_a-zA-Z0-9]+\\)?\\>\\([ \t]*(\\|[ \t\n]*{\\)\\|[ \t]*{"))
               (progn
               (setq ml (match-beginning 4)) ; "(" or "{" after control word
@@ -5225,7 +5226,7 @@ Returns some position at the last line."
              have-brace
              (not (looking-at
                    (concat "[ \t]*}[ \t]*\\(\\<"
-                           cperl-block-continuation-regexp
+                           cperl--block-continuation-regexp
                            "\\>\\|$\\|#\\)")))
              (condition-case nil
                  (progn
@@ -5706,14 +5707,14 @@ indentation and initial hashes.  Behaves usually outside of comment."
             (cons
              (concat
               "\\(?:^\\|[^$@%&\\]\\)\\<\\("
-              cperl-flow-control-regexp
+              cperl--flow-control-regexp
               "\\)\\>") 1)              ; was "\\)[ \n\t;():,|&]"
                                         ; In what follows we use `type' style
                                         ; for overwritable builtins
             (list
              (concat
               "\\(?:^\\|[^$@%&\\]\\)\\<\\("
-              cperl-functions-regexp
+              cperl--functions-regexp
               "\\)\\>")
              1 'font-lock-type-face)
             ;; In what follows we use `other' style
@@ -5721,7 +5722,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
             (list
              (concat
               "\\(?:^\\|[^$@%&\\]\\)\\<\\("
-              cperl-nonoverridable-regexp
+              cperl--nonoverridable-regexp
               "\\)\\>")
              1 'cperl-nonoverridable-face)
             '("-[rwxoRWXOezsfdlpSbctugkTBMAC]\\>\\([ \t]+_\\>\\)?" 0
@@ -5729,7 +5730,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
             ;; This highlights declarations and definitions differently.
             ;; We do not try to highlight in the case of attributes:
             ;; it is already done by `cperl-find-pods-heres'
-            (list (concat "\\<" cperl-sub-regexp
+            (list (concat "\\<" cperl--sub-regexp
                           cperl-white-and-comment-rex ; whitespace/comments
                           "\\([^ \n\t{;()]+\\)" ; 2=name (assume non-anonymous)
                           "\\("
@@ -5751,7 +5752,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
                          (if (eq (char-after (cperl-1- (match-end 0))) ?\{ )
                              'font-lock-function-name-face
                            'font-lock-variable-name-face))))
-            (list (concat "\\<" cperl-namespace-keywords-regexp
+            (list (concat "\\<" cperl--namespace-keywords-regexp
                           "[ \t]+\\([a-zA-Z_][a-zA-Z_0-9:]*\\)[ \t;]")
                   1 font-lock-function-name-face) ; require A if B;
             '("^[ \t]*format[ \t]+\\([a-zA-Z_][a-zA-Z_0-9:]*\\)[ \t]*=[ \t]*$"
@@ -5771,9 +5772,9 @@ indentation and initial hashes.  Behaves usually outside of comment."
             '("[[ \t{,(]\\(-?[a-zA-Z0-9_:]+\\)[ \t]*=>" 1
               font-lock-string-face t)
             (list (concat "^[ \t]*\\([a-zA-Z0-9_]+[ \t]*:\\)[ \t]*\\($\\|{\\|\\<"
-                          cperl-after-label-regexp "\\>\\)")
+                          cperl--after-label-regexp "\\>\\)")
                   1 font-lock-constant-face)  ; labels
-            (list (concat "\\<" cperl-before-label-regexp
+            (list (concat "\\<" cperl--before-label-regexp
                           "\\>[ \t]+\\([a-zA-Z0-9_:]+\\)")
                   1 font-lock-constant-face) ; labels as targets
             ;; Uncomment to get perl-mode-like vars
@@ -6601,7 +6602,7 @@ in subdirectories too."
   (let ((cmd "etags")
         (args '("-l" "none" "-r"
                 ;;                        1=fullname  2=package?             3=name                       4=proto?             5=attrs? (VERY APPROX!)
-                "/\\<" cperl-sub-regexp "[ \\t]+\\(\\([a-zA-Z0-9:_]*::\\)?\\([a-zA-Z0-9_]+\\)\\)[ \\t]*\\(([^()]*)[ \t]*\\)?\\([ \t]*:[^#{;]*\\)?\\([{#]\\|$\\)/\\3/"
+                "/\\<" cperl--sub-regexp "[ \\t]+\\(\\([a-zA-Z0-9:_]*::\\)?\\([a-zA-Z0-9_]+\\)\\)[ \\t]*\\(([^()]*)[ \t]*\\)?\\([ \t]*:[^#{;]*\\)?\\([{#]\\|$\\)/\\3/"
                 "-r"
                 "/\\<package[ \\t]+\\(\\([a-zA-Z0-9:_]*::\\)?\\([a-zA-Z0-9_]+\\)\\)[ \\t]*\\([#;]\\|$\\)/\\1/"
                 "-r"
@@ -6829,7 +6830,7 @@ Does not move point."
                         (number-to-string (1- (elt elt 1))) ; Char pos 0-based
                         "\n")
                 (if (and (string-match "^[_a-zA-Z]+::" (car elt))
-                         (string-match (concat "^" cperl-sub-regexp "[ \t]+\\([_a-zA-Z]+\\)[^:_a-zA-Z]")
+                         (string-match (concat "^" cperl--sub-regexp "[ \t]+\\([_a-zA-Z]+\\)[^:_a-zA-Z]")
                                        (elt elt 3)))
                     ;; Need to insert the name without package as well
                     (setq lst (cons (cons (substring (elt elt 3)
@@ -6959,7 +6960,7 @@ Use as
    "^\\("
       "\\(package\\)\\>"
      "\\|"
-      cperl-sub-regexp "\\>[^\n]+::"
+      cperl--sub-regexp "\\>[^\n]+::"
      "\\|"
       "[a-zA-Z_][a-zA-Z_0-9:]*(\C-?[^\n]+::" ; XSUB?
      "\\|"
@@ -8818,7 +8819,7 @@ do extra unwind via `cperl-unwind-to-safe'."
 ;;;;
 ;;;;  - Each new sets of keywords has a name (like we've been using "core"
 ;;;;    above
-;;;;  - The set comes with a command cperl-enable-<foo>-keywords.
+;;;;  - The set comes with a command cperl-<foo>-activate-keywords.
 ;;;;    There's no disabling yet.
 
 ;;; Moose keywords
@@ -8830,20 +8831,11 @@ do extra unwind via `cperl-unwind-to-safe'."
   "New keywords introduced by Moose, mostly good enough for Moo as well.
    Keys in the 'has' declaration are highlighted to detect typos.")
 
-(defvar cperl-moose-namespace-keywords
-  '("extends" "has" "with")
-  "Moose keywords followed by a namespace (quoted)"
-  )
-
 (defun cperl-moose-add-keywords ()
   "Add moose keywords to the keyword lst and re-compile
   the regular expressions used by cperl-mode."
-  (message "Adding moose keywords.")
   (dolist (keyword cperl-moose-nonoverridable-functions)
     (add-to-list 'cperl-nonoverridable-functions keyword)
-    )
-  (dolist (keyword cperl-moose-namespace-keywords)
-    (add-to-list 'cperl-namespace-keywords keyword)
     )
   (cperl-collect-keyword-regexps)
   (setq cperl-faces-init nil)
@@ -8855,6 +8847,8 @@ do extra unwind via `cperl-unwind-to-safe'."
   (cperl-moose-add-keywords)
   (cperl-mode)
   )
+
+
 
 (provide 'cperl-mode)
 
