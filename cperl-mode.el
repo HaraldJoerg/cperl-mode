@@ -1372,7 +1372,7 @@ Should contain exactly one group.")
   "Keywords for flow control"
   )
 
-(defvar cperl-core-nonoverridable-functions
+(defvar cperl-core-nonoverridable-keywords
   (append cperl-core-flow-control-keywords
           cperl-core-special-sub-keywords
     '("__END__" "__DATA__"
@@ -1403,7 +1403,7 @@ Should contain exactly one group.")
 (defvar-local cperl-namespace-keywords          cperl-core-namespace-keywords)
 (defvar-local cperl-functions-for-font-lock     cperl-core-functions-for-font-lock)
 (defvar-local cperl-flow-control-keywords       cperl-core-flow-control-keywords)
-(defvar-local cperl-nonoverridable-functions    cperl-core-nonoverridable-functions)
+(defvar-local cperl-nonoverridable-keywords     cperl-core-nonoverridable-keywords)
 (defvar-local cperl-sub-keywords                cperl-core-sub-keywords)
 (defvar-local cperl-after-label-keywords        cperl-core-after-label-keywords)
 (defvar-local cperl-before-label-keywords       cperl-core-before-label-keywords)
@@ -1418,7 +1418,7 @@ Should contain exactly one group.")
 (defvar-local cperl--namespace-keywords-regexp (regexp-opt cperl-namespace-keywords))
 (defvar-local cperl--functions-regexp          (regexp-opt cperl-functions-for-font-lock))
 (defvar-local cperl--flow-control-regexp       (regexp-opt cperl-flow-control-keywords))
-(defvar-local cperl--nonoverridable-regexp     (regexp-opt cperl-nonoverridable-functions))
+(defvar-local cperl--nonoverridable-regexp     (regexp-opt cperl-nonoverridable-keywords))
 (defvar-local cperl--sub-regexp                (regexp-opt cperl-sub-keywords))
 (defvar-local cperl--after-label-regexp        (regexp-opt cperl-after-label-keywords))
 (defvar-local cperl--before-label-regexp       (regexp-opt cperl-before-label-keywords))
@@ -1436,7 +1436,7 @@ Should contain exactly one group.")
   (setq cperl--namespace-keywords-regexp    (regexp-opt cperl-namespace-keywords)
         cperl--functions-regexp             (regexp-opt cperl-functions-for-font-lock)
         cperl--flow-control-regexp          (regexp-opt cperl-flow-control-keywords)
-        cperl--nonoverridable-regexp        (regexp-opt cperl-nonoverridable-functions)
+        cperl--nonoverridable-regexp        (regexp-opt cperl-nonoverridable-keywords)
         cperl--sub-regexp                   (regexp-opt cperl-sub-keywords)
         cperl--after-label-regexp           (regexp-opt cperl-after-label-keywords)
         cperl--before-label-regexp          (regexp-opt cperl-before-label-keywords)
@@ -8822,8 +8822,9 @@ do extra unwind via `cperl-unwind-to-safe'."
 ;;;;  - The set comes with a command cperl-<foo>-activate-keywords.
 ;;;;    There's no disabling yet.
 
+
 ;;; Moose keywords
-(defvar cperl-moose-nonoverridable-functions
+(defvar cperl-moose-nonoverridable-keywords
   '("accessor" "after" "around" "augment"
     "before" "blessed" "clearer" "confess"
     "extends" "has" "inner" "override"
@@ -8834,8 +8835,8 @@ do extra unwind via `cperl-unwind-to-safe'."
 (defun cperl-moose-add-keywords ()
   "Add moose keywords to the keyword lst and re-compile
   the regular expressions used by cperl-mode."
-  (dolist (keyword cperl-moose-nonoverridable-functions)
-    (add-to-list 'cperl-nonoverridable-functions keyword)
+  (dolist (keyword cperl-moose-nonoverridable-keywords)
+    (add-to-list 'cperl-nonoverridable-keywords keyword)
     )
   (cperl-collect-keyword-regexps)
   (setq cperl-faces-init nil)
