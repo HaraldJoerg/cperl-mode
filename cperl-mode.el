@@ -1562,8 +1562,6 @@ the last)."
 ;; Fix for msb.el
 (defvar cperl-msb-fixed nil)
 (defvar cperl-use-major-mode 'cperl-mode)
-(defvar cperl-font-lock-multiline-start nil)
-(defvar cperl-font-lock-multiline nil)
 (defvar cperl-font-locking nil)
 
 ;; NB as it stands the code in cperl-mode assumes this only has one
@@ -1776,7 +1774,6 @@ or as help on variables `cperl-tips', `cperl-problems',
     )
   ;;  haj 2020-06-25: Autodetect keywords - end of hack
   ;; Until Emacs is multi-threaded, we do not actually need it local:
-  (make-local-variable 'cperl-font-lock-multiline-start)
   (make-local-variable 'cperl-font-locking)
   (set (make-local-variable 'outline-regexp) cperl-outline-regexp)
   (set (make-local-variable 'outline-level) 'cperl-outline-level)
@@ -1873,14 +1870,11 @@ or as help on variables `cperl-tips', `cperl-problems',
                 ;;  to make font-lock think that font-lock-syntactic-keywords
                 ;;  are defined.
                 '(t)))))
-  (if (boundp 'font-lock-multiline)     ; Newer font-lock; use its facilities
-      (progn
-        (setq cperl-font-lock-multiline t) ; Not localized...
-        (set (make-local-variable 'font-lock-multiline) t))
-    (set (make-local-variable 'font-lock-fontify-region-function)
-         ;; not present with old Emacs
-         #'cperl-font-lock-fontify-region-function))
   (set (make-local-variable 'font-lock-fontify-region-function)
+       ;; not present with old Emacs
+       #'cperl-font-lock-fontify-region-function)
+  (set (make-local-variable 'font-lock-fontify-region-function)
+       ;; 2020-06-18 (haj) Smell: This is now duplicate
        #'cperl-font-lock-fontify-region-function)
   (make-local-variable 'cperl-old-style)
   (set (make-local-variable 'normal-auto-fill-function)
@@ -5638,11 +5632,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
 (defun cperl-windowed-init ()
   "Initialization under windowed version."
   (cond ((featurep 'ps-print)
-         (or cperl-faces-init
-             (progn
-               (and (boundp 'font-lock-multiline)
-                    (setq cperl-font-lock-multiline t))
-               (cperl-init-faces))))
+         (or cperl-faces-init (cperl-init-faces)))
         ((not cperl-faces-init)
          (add-hook 'font-lock-mode-hook
                    (function
@@ -5738,20 +5728,10 @@ indentation and initial hashes.  Behaves usually outside of comment."
                           "([^()]*)\\)?" ; prototype
                           cperl-maybe-white-and-comment-rex ; whitespace/comments?
                           "[{;]")
-                  2 (if cperl-font-lock-multiline
-                        '(if (eq (char-after (cperl-1- (match-end 0))) ?\{ )
-                             'font-lock-function-name-face
-                           'font-lock-variable-name-face)
-                      ;; need to manually set 'multiline' for older font-locks
-                      '(progn
-                         (if (< 1 (count-lines (match-beginning 0)
-                                               (match-end 0)))
-                             (put-text-property
-                              (+ 3 (match-beginning 0)) (match-end 0)
-                              'syntax-type 'multiline))
-                         (if (eq (char-after (cperl-1- (match-end 0))) ?\{ )
-                             'font-lock-function-name-face
-                           'font-lock-variable-name-face))))
+                  2 (if (eq (char-after (cperl-1- (match-end 0))) ?\{ )
+                         'font-lock-function-name-face
+                       'font-lock-variable-name-face)
+                  )
             (list (concat "\\<" cperl--namespace-keywords-regexp
                           "[ \t]+\\([a-zA-Z_][a-zA-Z_0-9:]*\\)[ \t;]")
                   1 font-lock-function-name-face) ; require A if B;
@@ -5796,11 +5776,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
                               "\\(("
                               cperl-maybe-white-and-comment-rex
                               "\\)?\\([$@%*]\\([a-zA-Z0-9_:]+\\|[^a-zA-Z0-9_]\\)\\)")
-                     (5 ,(if cperl-font-lock-multiline
-                             'font-lock-variable-name-face
-                           '(progn  (setq cperl-font-lock-multiline-start
-                                          (match-beginning 0))
-                                    'font-lock-variable-name-face)))
+                     (5 'font-lock-variable-name-face)
                      (,(concat "\\="
                                cperl-maybe-white-and-comment-rex
                                ","
@@ -5809,35 +5785,17 @@ indentation and initial hashes.  Behaves usually outside of comment."
                       ;; Bug in font-lock: limit is used not only to limit
                       ;; searches, but to set the "extend window for
                       ;; facification" property.  Thus we need to minimize.
-                      ,(if cperl-font-lock-multiline
-                           '(if (match-beginning 3)
-                                (save-excursion
-                                  (goto-char (match-beginning 3))
-                                  (condition-case nil
-                                      (forward-sexp 1)
-                                    (error
-                                     (condition-case nil
-                                         (forward-char 200)
-                                       (error nil)))) ; typeahead
-                                  (1- (point))) ; report limit
-                              (forward-char -2)) ; disable continued expr
-                         '(if (match-beginning 3)
-                              (point-max) ; No limit for continuation
-                            (forward-char -2))) ; disable continued expr
-                      ,(if cperl-font-lock-multiline
-                           nil
-                         '(progn    ; Do at end
-                            ;; "my" may be already fontified (POD),
-                            ;; so cperl-font-lock-multiline-start is nil
-                            (if (or (not cperl-font-lock-multiline-start)
-                                    (> 2 (count-lines
-                                          cperl-font-lock-multiline-start
-                                          (point))))
-                                nil
-                              (put-text-property
-                               (1+ cperl-font-lock-multiline-start) (point)
-                               'syntax-type 'multiline))
-                            (setq cperl-font-lock-multiline-start nil)))
+                      (if (match-beginning 3)
+                          (save-excursion
+                            (goto-char (match-beginning 3))
+                            (condition-case nil
+                                (forward-sexp 1)
+                              (error
+                               (condition-case nil
+                                   (forward-char 200)
+                                 (error nil)))) ; typeahead
+                            (1- (point))) ; report limit
+                        (forward-char -2)) ; disable continued expr
                       (3 font-lock-variable-name-face))))
                   (t '("^[ \t{}]*\\(state\\|my\\|local\\|our\\)[ \t]*\\(([ \t]*\\)?\\([$@%*][a-zA-Z0-9_:]+\\)"
                        3 font-lock-variable-name-face)))
