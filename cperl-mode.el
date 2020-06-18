@@ -8822,6 +8822,111 @@ do extra unwind via `cperl-unwind-to-safe'."
 ;;;;  - The set comes with a command cperl-<foo>-activate-keywords.
 ;;;;    There's no disabling yet.
 
+(defclass cperl--keyword-set ()
+  ((name :initarg :name
+         :initform ""
+         :type string
+         :custom string
+         :documentation "The (probably useless) name of this keyword set"
+         )
+   (namespace-keywords :initarg :namespace-keywords
+                       :initform nil
+                       :type list
+                       :custom list
+                       :documentation "Keywords followed by an unquoted Perl namespace")
+   (functions-keywords :initarg :functions-keywords
+                       :initform nil
+                       :type list
+                       :custom list
+                       :documentation "Keywords for overridable functions")
+   (sub-keywords :initarg :sub-keywords
+                 :initform nil
+                 :type list
+                 :custom list
+                 :documentation "Keywords which start subroutines")
+   (block-init-keywords :initarg :block-init-keywords
+                        :initform nil
+                        :type list
+                        :custom list
+                        :documentation "Keywords which start a block")
+   (block-continuation-keywords :initarg :block-continuation-keywords
+                                :initform nil
+                                :type list
+                                :custom list
+                                :documentation "Keywords which continue a block")
+   (named-block-keywords :initarg :named-block-keywords
+                         :initform nil
+                         :type list
+                         :custom list
+                         :documentation "Keywords which start \"special\" blocks")
+   (special-sub-keywords :initarg :special-sub-keywords
+                         :initform nil
+                         :type list
+                         :custom list
+                         :documentation "Special names for subroutines")
+   (declaring-keywords :initarg :declaring-keywords
+                       :initform nil
+                       :type list
+                       :custom list
+                       :documentation "Keywords to declare variables")
+   (flow-control-keywords :initarg :declaring-keywords
+                          :initform nil
+                          :type list
+                          :custom list
+                          :documentation "Keywords to declare variables")
+   (nonoverridable-keywords :initarg :nonoverridable-keywords
+                            :initform nil
+                            :type list
+                            :custom list
+                            :documentation "Keywords which should not be overridden")
+   (before-label-keywords :initarg :before-label-keywords
+                          :initform nil
+                          :type list
+                          :custom list
+                          :documentation "Keywords whch may be followed by a label")
+   (after-label-keywords :initarg :after-label-keywords
+                         :initform nil
+                         :type list
+                         :custom list
+                         :documentation "Keywords which may be preceded by a label")
+   )
+  )
+
+(defun cperl--add-list (kw-list kw-append)
+  "Adds a list of keywords to another, avoiding duplicates."
+  (dolist (kw kw-append) (add-to-list kw-list kw)))
+
+(cl-defmethod cperl--add-keywords ((kw-set cperl--keyword-set))
+  "Adds the keywords provided by KW-SET (which is a cperl--keyword-set
+object) to the appropriate keyword lists from which cperl-mode builds regular
+expressions for syntax highlighting, intenting, and indexing."
+  (with-slots (namespace-keywords
+               functions-keywords
+               sub-keywords
+               block-init-keywords
+               block-continuation-keywords
+               named-block-keywords
+               special-sub-keywords
+               declaring-keywords
+               flow-control-keywords
+               nonoverridable-keywords
+               before-label-keywords
+               after-label-keywords)
+      kw-set
+    (cperl--add-list 'cperl-namespace-keywords namespace-keywords)
+    (cperl--add-list 'cperl-functions-keywords functions-keywords)
+    (cperl--add-list 'cperl-sub-keywords sub-keywords)
+    (cperl--add-list 'cperl-block-init-keywords block-init-keywords)
+    (cperl--add-list 'cperl-block-continuation-keywords block-continuation-keywords)
+    (cperl--add-list 'cperl-named-block-keywords named-block-keywords)
+    (cperl--add-list 'cperl-special-sub-keywords special-sub-keywords)
+    (cperl--add-list 'cperl-declaring-keywords declaring-keywords)
+    (cperl--add-list 'cperl-flow-control-keywords flow-control-keywords)
+    (cperl--add-list 'cperl-nonoverridable-keywords nonoverridable-keywords)
+    (cperl--add-list 'cperl-before-label-keywords before-label-keywords)
+    (cperl--add-list 'cperl-after-label-keywords after-label-keywords)
+    )
+  )
 
 ;;; Moose keywords
 (defvar cperl-moose-nonoverridable-keywords
@@ -8829,14 +8934,16 @@ do extra unwind via `cperl-unwind-to-safe'."
     "before" "blessed" "clearer" "confess"
     "extends" "has" "inner" "override"
     "predicate" "super" "traits" "with")
-  "New keywords introduced by Moose, mostly good enough for Moo as well.
-   Keys in the 'has' declaration are highlighted to detect typos.")
+  "New keywords introduced by Moose, mostly good enough for Moo as well.")
+
 
 (defun cperl-moose-add-keywords ()
   "Add moose keywords to the keyword lst and re-compile
-  the regular expressions used by cperl-mode."
-  (dolist (keyword cperl-moose-nonoverridable-keywords)
-    (add-to-list 'cperl-nonoverridable-keywords keyword)
+the regulaer expressions used by cperl-mode."
+  (let ((keywords
+         (cperl--keyword-set
+          :nonoverridable-keywords cperl-moose-nonoverridable-keywords)))
+    (cperl--add-keywords keywords)
     )
   (cperl-collect-keyword-regexps)
   (setq cperl-faces-init nil)
@@ -8846,10 +8953,7 @@ do extra unwind via `cperl-unwind-to-safe'."
   "Add and activate Moose keywords in this buffer."
   (interactive)
   (cperl-moose-add-keywords)
-  (cperl-mode)
   )
-
-
 
 (provide 'cperl-mode)
 
