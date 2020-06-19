@@ -5796,6 +5796,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
                                  (error nil)))) ; typeahead
                             (1- (point))) ; report limit
                         (forward-char -2)) ; disable continued expr
+                      nil
                       (3 font-lock-variable-name-face))))
                   (t '("^[ \t{}]*\\(state\\|my\\|local\\|our\\)[ \t]*\\(([ \t]*\\)?\\([$@%*][a-zA-Z0-9_:]+\\)"
                        3 font-lock-variable-name-face)))
