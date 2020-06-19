@@ -1429,6 +1429,7 @@ Should contain exactly one group.")
 (defvar-local cperl--named-block-regexp        (regexp-opt cperl-named-block-keywords))
 (defvar-local cperl--special-sub-regexp        (regexp-opt cperl-special-sub-keywords))
 
+(defvar cperl--force-moose nil)
 
 (defun cperl-collect-keyword-regexps ()
   "Merge all keyword lists to optimized regular expressions which
@@ -1768,8 +1769,9 @@ or as help on variables `cperl-tips', `cperl-problems',
   (save-excursion
     (goto-char (point-min))
     (when
-        (re-search-forward "^[\t ]*\\(use\\|require\\)[\t ]+Moo\\(se\\)?\\W" nil t)
-        (cperl-moose-add-keywords)
+        (or cperl--force-moose
+            (re-search-forward "^[\t ]*\\(use\\|require\\)[\t ]+Moo\\(se\\)?\\W" nil t))
+      (cperl-moose-add-keywords)
       )
     )
   ;;  haj 2020-06-25: Autodetect keywords - end of hack
@@ -8817,7 +8819,9 @@ the regulaer expressions used by cperl-mode."
 (defun cperl-moose-activate-keywords ()
   "Add and activate Moose keywords in this buffer."
   (interactive)
-  (cperl-moose-add-keywords)
+  (let ((cperl--force-moose t))
+    (cperl-mode)
+    )
   )
 
 (provide 'cperl-mode)
