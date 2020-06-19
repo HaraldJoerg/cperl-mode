@@ -5007,13 +5007,15 @@ conditional/loop constructs."
                         (if (eq (following-char) ?$ ) ; for my $var (list)
                             (progn
                               (forward-sexp -1)
-                              (if (looking-at "\\(state\\|my\\|local\\|our\\)\\>")
+                              (if (looking-at (concat cperl--declaring-regexp "\\>"))
                                   (forward-sexp -1))))
                         (if (looking-at
-                             (concat "\\(elsif\\|if\\|unless\\|while\\|until"
-                                     "\\|for\\(each\\)?\\>\\(\\("
+                             (concat "\\(?:" cperl--block-init-regexp
+                                     "\\|elsif" ;; elsif starts a new block
+                                     "\\>\\(\\("
                                      cperl-maybe-white-and-comment-rex
-                                     "\\(state\\|my\\|local\\|our\\)\\)?"
+                                     cperl--declaring-regexp
+                                     "\\)?"
                                      cperl-maybe-white-and-comment-rex
                                      "\\$[_a-zA-Z0-9]+\\)?\\)\\>"))
                             (progn
@@ -5749,13 +5751,13 @@ indentation and initial hashes.  Behaves usually outside of comment."
             ;;; '("[$*]{?\\(\\sw+\\)" 1 font-lock-variable-name-face)
             ;;; '("\\([@%]\\|\\$#\\)\\(\\sw+\\)"
             ;;;  (2 (cons font-lock-variable-name-face '(underline))))
-            ;; 1=my_etc, 2=white? 3=(+white? 4=white? 5=var
-            `(,(concat "\\<\\(state\\|my\\|local\\|our\\)"
+            ;; 1=white? 2=(+white? 3=white? 4=var
+            `(,(concat "\\<" cperl--declaring-regexp
                        cperl-maybe-white-and-comment-rex
                        "\\(("
                        cperl-maybe-white-and-comment-rex
                        "\\)?\\([$@%*]\\([a-zA-Z0-9_:]+\\|[^a-zA-Z0-9_]\\)\\)")
-              (5 'font-lock-variable-name-face)
+              (4 'font-lock-variable-name-face)
               (,(concat "\\="
                         cperl-maybe-white-and-comment-rex
                         ","
@@ -5764,21 +5766,22 @@ indentation and initial hashes.  Behaves usually outside of comment."
                ;; Bug in font-lock: limit is used not only to limit
                ;; searches, but to set the "extend window for
                ;; facification" property.  Thus we need to minimize.
-               (if (match-beginning 3)
-                   (save-excursion
-                     (goto-char (match-beginning 3))
-                     (condition-case nil
-                         (forward-sexp 1)
-                       (error
-                        (condition-case nil
-                            (forward-char 200)
-                          (error nil)))) ; typeahead
-                     (1- (point))) ; report limit
-                 (forward-char -2)) ; disable continued expr
+               '(if (match-beginning 2)
+                    (save-excursion
+                      (goto-char (match-beginning 2))
+                      (condition-case nil
+                          (forward-sexp 1)
+                        (error
+                         (condition-case nil
+                             (forward-char 200)
+                           (error nil)))) ; typeahead
+                      (1- (point))) ; report limit
+                  (forward-char -2)) ; disable continued expr
                nil
                (3 font-lock-variable-name-face)))
-            '("\\<for\\(each\\)?\\([ \t]+\\(state\\|my\\|local\\|our\\)\\)?[ \t]*\\(\\$[a-zA-Z_][a-zA-Z_0-9]*\\)[ \t]*("
-              4 font-lock-variable-name-face)
+            `(,(concat "\\<for\\(each\\)?\\([ \t]+" cperl--declaring-regexp
+                       "\\)?[ \t]*\\(\\$[a-zA-Z_][a-zA-Z_0-9]*\\)[ \t]*(")
+              3 font-lock-variable-name-face)
             ;; Avoid $!, and s!!, qq!! etc. when not fontifying syntactically
             '("\\(?:^\\|[^smywqrx$]\\)\\(!\\)" 1 font-lock-negation-char-face)
             '("\\[\\(\\^\\)" 1 font-lock-negation-char-face prepend)))
