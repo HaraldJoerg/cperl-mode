@@ -5728,7 +5728,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
                           "([^()]*)\\)?" ; prototype
                           cperl-maybe-white-and-comment-rex ; whitespace/comments?
                           "[{;]")
-                  2 (if (eq (char-after (cperl-1- (match-end 0))) ?\{ )
+                  2 '(if (eq (char-after (cperl-1- (match-end 0))) ?\{ )
                          'font-lock-function-name-face
                        'font-lock-variable-name-face)
                   )
