@@ -1,4 +1,4 @@
-;;; cperl-mode.el --- Perl code editing commands for Emacs  -*- lexical-binding:t -*-
+;;; cperl-mode.el --- Perl code editing commands   -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1985-1987, 1991-2020 Free Software Foundation, Inc.
 
@@ -9,6 +9,7 @@
 ;; Keywords: languages, Perl
 
 ;; Package-Requires: ((emacs "26.1"))
+;; Package-Version: 7.00
 ;; Homepage: https://github.com/HaraldJoerg/cperl-mode
 
 ;; This file is based on the original which is part of GNU Emacs.
@@ -1316,8 +1317,7 @@ Should contain exactly one group.")
     "sysseek" "system" "syswrite"
     "tell" "telldir" "time" "times" "truncate"
     "uc" "ucfirst" "umask" "unlink" "unpack" "utime"        "values" "vec"
-    "wait" "waitpid" "wantarray" "warn" "write"        "x" "xor"
-    )
+    "wait" "waitpid" "wantarray" "warn" "write"        "x" "xor")
   "The list of functions to be font-locked")
 
 (defvar cperl-core-sub-keywords
@@ -1326,29 +1326,24 @@ Should contain exactly one group.")
 
 (defvar cperl-core-block-init-keywords
   '("for" "foreach" "if" "unless" "until" "while")
-  "Keywords which start a conditional/loop"
-  )
+  "Keywords which start a conditional/loop")
 
 (defvar cperl-core-block-continuation-keywords
   '("else" "elsif" "continue")
-  "Keywords which continue control flow with another block"
-  )
+  "Keywords which continue control flow with another block")
 
 (defvar cperl-core-named-block-keywords
   '("BEGIN" "CHECK" "END" "INIT" "UNITCHECK")
   "These keywords introduce a block which ends a statement
-   without 'sub', and without a semicolon"
-  )
+   without 'sub', and without a semicolon")
 
 (defvar cperl-core-special-sub-keywords
   '("AUTOLOAD" "DESTROY")
-  "Subroutines with predefined names"
-  )
+  "Subroutines with predefined names")
 
 (defvar cperl-core-declaring-keywords
   '("local" "my" "our" "state")
-  "Keywords preceding variable names"
-  )
+  "Keywords preceding variable names")
 
 (defvar cperl-core-flow-control-keywords
   (append cperl-core-sub-keywords
@@ -1372,8 +1367,7 @@ Should contain exactly one group.")
             "when"
             )
           )
-  "Keywords for flow control"
-  )
+  "Keywords for flow control")
 
 (defvar cperl-core-nonoverridable-keywords
   (append cperl-core-flow-control-keywords
