@@ -8,6 +8,9 @@
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: languages, Perl
 
+;; Package-Requires: ((emacs "24.3"))
+;; Homepage: https://github.com/HaraldJoerg/cperl-mode
+
 ;; This file is based on the original which is part of GNU Emacs.
 ;; Modifications 2020 by Harald Joerg <haj@posteo.de>
 
