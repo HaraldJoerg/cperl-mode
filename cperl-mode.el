@@ -5717,8 +5717,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
                           "[{;]")
                   2 '(if (eq (char-after (cperl-1- (match-end 0))) ?\{ )
                          'font-lock-function-name-face
-                       'font-lock-variable-name-face)
-                  )
+                       'font-lock-variable-name-face))
             (list (concat "\\<" cperl--namespace-keywords-regexp
                           "[ \t]+\\([a-zA-Z_][a-zA-Z_0-9:]*\\)[ \t;]")
                   1 font-lock-function-name-face) ; require A if B;
@@ -8682,8 +8681,7 @@ do extra unwind via `cperl-unwind-to-safe'."
          :initform ""
          :type string
          :custom string
-         :documentation "The (probably useless) name of this keyword set"
-         )
+         :documentation "The (probably useless) name of this keyword set")
    (namespace-keywords :initarg :namespace-keywords
                        :initform nil
                        :type list
@@ -8743,9 +8741,7 @@ do extra unwind via `cperl-unwind-to-safe'."
                          :initform nil
                          :type list
                          :custom list
-                         :documentation "Keywords which may be preceded by a label")
-   )
-  )
+                         :documentation "Keywords which may be preceded by a label")))
 
 (defun cperl--add-list (kw-list kw-append)
   "Add the list of keywords KW-LIST to KW-APPEND.
@@ -8782,9 +8778,7 @@ highlighting, intenting, and indexing."
     (cperl--add-list 'cperl-flow-control-keywords flow-control-keywords)
     (cperl--add-list 'cperl-nonoverridable-keywords nonoverridable-keywords)
     (cperl--add-list 'cperl-before-label-keywords before-label-keywords)
-    (cperl--add-list 'cperl-after-label-keywords after-label-keywords)
-    )
-  )
+    (cperl--add-list 'cperl-after-label-keywords after-label-keywords)))
 
 ;;; Moose keywords
 (defvar cperl-moose-nonoverridable-keywords
@@ -8804,16 +8798,13 @@ the regulaer expressions used by `cperl-mode'."
     (cperl--add-keywords keywords)
     )
   (cperl-collect-keyword-regexps)
-  (setq cperl-faces-init nil)
-  )
+  (setq cperl-faces-init nil))
 
 (defun cperl-moose-activate-keywords ()
   "Add and activate Moose keywords in this buffer."
   (interactive)
   (let ((cperl--force-moose t))
-    (cperl-mode)
-    )
-  )
+    (cperl-mode)))
 
 (provide 'cperl-mode)
 
