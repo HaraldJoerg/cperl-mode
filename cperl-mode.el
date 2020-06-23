@@ -299,7 +299,7 @@ Can be overwritten by `cperl-hairy' if nil."
 Can be overwritten by `cperl-hairy' if nil.
 
 Uses `abbrev-mode' to do the expansion.  If you want to use your
-own abbrevs in cperl-mode, but do not want keywords to be
+own abbrevs in `cperl-mode', but do not want keywords to be
 electric, you must redefine `cperl-mode-abbrev-table': do
 \\[edit-abbrevs], search for `cperl-mode-abbrev-table', and, in
 that paragraph, delete the words that appear at the ends of lines and
@@ -1364,9 +1364,7 @@ Should contain exactly one group.")
             "redo" "require" "return"
             "try"
             "use"
-            "when"
-            )
-          )
+            "when"))
   "Keywords for flow control")
 
 (defvar cperl-core-nonoverridable-keywords
@@ -1382,8 +1380,7 @@ Should contain exactly one group.")
     "sort" "splice" "split" "study" "sub" "tie" "tied" "tr" "try"
     "undef" "unshift" "untie"
     "y"))
-  "Keywords shown as non-overridable (though some of them are)"
-  )
+  "Keywords shown as non-overridable (though some of them are)")
 
 
 (defvar cperl-core-after-label-keywords
@@ -1430,7 +1427,7 @@ Should contain exactly one group.")
 
 (defun cperl-collect-keyword-regexps ()
   "Merge all keyword lists to optimized regular expressions which
-   will actually be used by cperl-mode."
+   will actually be used by `cperl-mode'."
   (setq cperl--namespace-keywords-regexp    (regexp-opt cperl-namespace-keywords)
         cperl--functions-regexp             (regexp-opt cperl-functions-for-font-lock)
         cperl--flow-control-regexp          (regexp-opt cperl-flow-control-keywords)
@@ -1443,9 +1440,7 @@ Should contain exactly one group.")
         cperl--block-continuation-regexp    (regexp-opt cperl-block-continuation-keywords)
         cperl--block-regexp                 (regexp-opt cperl-block-keywords)
         cperl--named-block-regexp           (regexp-opt cperl-named-block-keywords)
-        cperl--special-sub-regexp           (regexp-opt cperl-special-sub-keywords)
-        )
-  )
+        cperl--special-sub-regexp           (regexp-opt cperl-special-sub-keywords)))
 
 
 ;; Is incorporated in `cperl-imenu--function-name-regexp-perl'
@@ -1768,9 +1763,7 @@ or as help on variables `cperl-tips', `cperl-problems',
     (when
         (or cperl--force-moose
             (re-search-forward "^[\t ]*\\(use\\|require\\)[\t ]+Moo\\(se\\)?\\W" nil t))
-      (cperl-moose-add-keywords)
-      )
-    )
+      (cperl-moose-add-keywords)))
   ;;  haj 2020-06-25: Autodetect keywords - end of hack
   ;; Until Emacs is multi-threaded, we do not actually need it local:
   (make-local-variable 'cperl-font-locking)
@@ -2178,8 +2171,7 @@ Affected by `cperl-electric-parens'."
     (if (and other-end
              (cperl-val 'cperl-electric-parens)
              (memq last-command-event '( ?\) ?\] ?\} ?\> ))
-             (>= (save-excursion (cperl-to-comment-or-eol) (point)) (point))
-             )
+             (>= (save-excursion (cperl-to-comment-or-eol) (point)) (point)))
         (progn
           (self-insert-command (prefix-numeric-value arg))
           (setq p (point))
@@ -3614,8 +3606,7 @@ Should be called with the point before leading colon of an attribute."
           "\\|"
           "\\("                                 ; 7: other escapes
             "\\\\[pP]" "\\([^{]\\|{[^{}]*}\\)"
-            "\\|" "\\\\[^pP]" "\\)"
-          )
+            "\\|" "\\\\[^pP]" "\\)")
          endbracket 'toend)
       (if (match-beginning 4)
           (cperl-postpone-fontification
@@ -8757,13 +8748,16 @@ do extra unwind via `cperl-unwind-to-safe'."
   )
 
 (defun cperl--add-list (kw-list kw-append)
-  "Adds a list of keywords to another, avoiding duplicates."
+  "Add the list of keywords KW-LIST to KW-APPEND.
+Keywords occuring in both lists will only appear once
+in the result."
   (dolist (kw kw-append) (add-to-list kw-list kw)))
 
 (cl-defmethod cperl--add-keywords ((kw-set cperl--keyword-set))
-  "Adds the keywords provided by KW-SET (which is a cperl--keyword-set
-object) to the appropriate keyword lists from which cperl-mode builds regular
-expressions for syntax highlighting, intenting, and indexing."
+  "Add KW-SET to the appropriate keyword lists.
+KW-SET is a `cperl--keyword-set' object.  From the lists
+`cperl-mode' builds regular expressions for syntax
+highlighting, intenting, and indexing."
   (with-slots (namespace-keywords
                functions-keywords
                sub-keywords
@@ -8803,7 +8797,7 @@ expressions for syntax highlighting, intenting, and indexing."
 
 (defun cperl-moose-add-keywords ()
   "Add moose keywords to the keyword lst and re-compile
-the regulaer expressions used by cperl-mode."
+the regulaer expressions used by `cperl-mode'."
   (let ((keywords
          (cperl--keyword-set
           :nonoverridable-keywords cperl-moose-nonoverridable-keywords)))
