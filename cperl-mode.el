@@ -141,7 +141,8 @@
 
 
 (defcustom cperl-extra-newline-before-brace nil
-  "Non-nil means that if, elsif, while, until, else, for, foreach
+  "If true, add a newline before opening braces.
+Non-nil means that if, elsif, while, until, else, for, foreach
 and do constructs look like:
 
         if ()
@@ -157,7 +158,8 @@ instead of:
 
 (defcustom cperl-extra-newline-before-brace-multiline
   cperl-extra-newline-before-brace
-  "Non-nil means the same as `cperl-extra-newline-before-brace', but
+  "If true, add a newline before opening braces.
+Non-nil means the same as `cperl-extra-newline-before-brace', but
 for constructs with multiline if/unless/while/until/for/foreach condition."
   :type 'boolean
   :group 'cperl-autoinsert-details)
@@ -211,7 +213,7 @@ to the right of the start of its line."
   :group 'cperl-indentation-details)
 (defcustom cperl-continued-brace-offset 0
   "Extra indent for substatements that start with open-braces.
-This is in addition to cperl-continued-statement-offset."
+This is in addition to `cperl-continued-statement-offset'."
   :type 'integer
   :group 'cperl-indentation-details)
 (defcustom cperl-close-paren-offset -1
@@ -231,7 +233,8 @@ Versions 5.2 ... 5.20 behaved as if this were nil."
   :group 'cperl-indentation-details)
 
 (defcustom cperl-auto-newline nil
-  "Non-nil means automatically newline before and after braces,
+  "If true, insert newlines automatically where apprporiate.
+Non-nil means automatically newline before and after braces,
 and after colons and semicolons, inserted in CPerl code.  The following
 \\[cperl-electric-backspace] will remove the inserted whitespace.
 Insertion after colons requires both this variable and
@@ -8795,8 +8798,7 @@ the regulaer expressions used by `cperl-mode'."
   (let ((keywords
          (cperl--keyword-set
           :nonoverridable-keywords cperl-moose-nonoverridable-keywords)))
-    (cperl--add-keywords keywords)
-    )
+    (cperl--add-keywords keywords))
   (cperl-collect-keyword-regexps)
   (setq cperl-faces-init nil))
 
