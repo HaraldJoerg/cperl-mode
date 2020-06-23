@@ -8,7 +8,7 @@
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: languages, Perl
 
-;; Package-Requires: ((emacs "24.3"))
+;; Package-Requires: ((emacs "26.1"))
 ;; Homepage: https://github.com/HaraldJoerg/cperl-mode
 
 ;; This file is based on the original which is part of GNU Emacs.
@@ -8273,7 +8273,7 @@ the appropriate statement modifier."
   (interactive)
   (cperl-perldoc (cperl-word-at-point)))
 
-(defcustom pod2man-program "pod2man"
+(defcustom cperl-pod2man-program "pod2man"
   "File name for `pod2man'."
   :type 'file
   :group 'cperl)
@@ -8291,7 +8291,7 @@ the appropriate statement modifier."
         ;; Prevent any attempt to use display terminal fanciness.
         (setenv "TERM" "dumb")
         (set-process-sentinel
-         (start-process pod2man-program buffer "sh" "-c"
+         (start-process cperl-pod2man-program buffer "sh" "-c"
                         (format (cperl-pod2man-build-command) pod2man-args))
          'Man-bgproc-sentinel)))))
 
@@ -8306,7 +8306,7 @@ the appropriate statement modifier."
 
 (defun cperl-pod2man-build-command ()
   "Builds the entire background manpage and cleaning command."
-  (let ((command (concat pod2man-program " %s 2>/dev/null"))
+  (let ((command (concat cperl-pod2man-program " %s 2>/dev/null"))
         (flist (and (boundp 'Man-filter-list) Man-filter-list)))
     (while (and flist (car flist))
       (let ((pcom (car (car flist)))
