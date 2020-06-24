@@ -255,8 +255,8 @@ Subject to `cperl-auto-newline' setting."
   :group 'cperl-autoinsert-details)
 
 (defcustom cperl-tab-always-indent t
-  "Non-nil means TAB in CPerl mode should always reindent the current line,
-regardless of where in the line point is when the TAB command is used."
+  "Non-nil means TAB in CPerl mode should always reindent the current line.
+This is regardless of where in the line point is when the TAB command is used."
   :type 'boolean
   :group 'cperl-indentation-details)
 
@@ -301,13 +301,12 @@ Can be overwritten by `cperl-hairy' if nil."
   "Not-nil (and non-null) means keywords are electric in CPerl.
 Can be overwritten by `cperl-hairy' if nil.
 
-Uses `abbrev-mode' to do the expansion.  If you want to use your
-own abbrevs in `cperl-mode', but do not want keywords to be
-electric, you must redefine `cperl-mode-abbrev-table': do
+Uses the function `abbrev-mode' to do the expansion.  If you want
+to use your own abbrevs in `cperl-mode', but do not want keywords
+to be electric, you must redefine `cperl-mode-abbrev-table': do
 \\[edit-abbrevs], search for `cperl-mode-abbrev-table', and, in
-that paragraph, delete the words that appear at the ends of lines and
-that begin with \"cperl-electric\".
-"
+that paragraph, delete the words that appear at the ends of lines
+and that begin with \"cperl-electric\"."
   :type '(choice (const null) boolean)
   :group 'cperl-affected-by-hairy)
 
@@ -356,7 +355,7 @@ Affects: `cperl-font-lock', `cperl-electric-lbrace-space',
 ;;   :group 'cperl)
 
 (defcustom cperl-info-on-command-no-prompt nil
-  "Not-nil (and non-null) means not to prompt on C-h f.
+  "Not-nil (and non-null) means not to prompt on \\[cperl-info-on-command].
 The opposite behavior is always available if prefixed with C-c.
 Can be overwritten by `cperl-hairy' if nil."
   :type '(choice (const null) boolean)
@@ -8790,7 +8789,6 @@ highlighting, intenting, and indexing."
     "extends" "has" "inner" "override"
     "predicate" "super" "traits" "with")
   "New keywords introduced by Moose, mostly good enough for Moo as well.")
-
 
 (defun cperl-moose-add-keywords ()
   "Add moose keywords to the keyword lst and re-compile
