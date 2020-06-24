@@ -139,6 +139,12 @@
   :prefix "cperl-"
   :group 'cperl)
 
+(defgroup cperl-keyword-sets nil
+  "Add keywords coming from Perl modules"
+  :prefix "cperl-" ;; how is this used? -- haj 2020-06-20
+  :group 'cperl
+  )
+
 
 (defcustom cperl-extra-newline-before-brace nil
   "If true, add a newline before opening braces.
@@ -1281,7 +1287,17 @@ Should contain exactly one group.")
 "Regular expression to match whitespace with interspersed comments.
 Should contain exactly one group.")
 
+
 ;;;; Perl core keywords and regular expressions
+;; The following code allows Emacs to load different
+;; keyword sets for fontification / indenting / indexing
+;; either automatically or by user command(s).
+
+(defcustom cperl-automatic-keyword-sets nil
+  "If true, then cperl-mode will enable keywords for a buffer
+when it finds the modules which export them in the buffer's file."
+  :type 'boolean
+  :group 'cperl-keyword-sets)
 
 (defvar cperl-core-namespace-keywords
   '("package" "require" "use" "no" "bootstrap")
@@ -1424,8 +1440,6 @@ Should contain exactly one group.")
 (defvar-local cperl--block-regexp              (regexp-opt cperl-block-keywords))
 (defvar-local cperl--named-block-regexp        (regexp-opt cperl-named-block-keywords))
 (defvar-local cperl--special-sub-regexp        (regexp-opt cperl-special-sub-keywords))
-
-(defvar cperl--force-moose nil)
 
 (defun cperl-collect-keyword-regexps ()
   "Merge all keyword lists to optimized regular expressions which
@@ -1761,11 +1775,21 @@ or as help on variables `cperl-tips', `cperl-problems',
   ;; haj 2020-06-25: Autodetect keywords - a crude hack
   ;; This ought to be replaced by a hook into which keyword sets can jump in
   (save-excursion
-    (goto-char (point-min))
-    (when
-        (or cperl--force-moose
-            (re-search-forward "^[\t ]*\\(use\\|require\\)[\t ]+Moo\\(se\\)?\\W" nil t))
-      (cperl-moose-add-keywords)))
+    (when cperl-automatic-keyword-sets
+      (progn
+        (goto-char (point-min))
+        (when (re-search-forward
+               "^[\t ]*\\(use\\|require\\)[\t ]+Moo\\(se\\)?\\W" nil t)
+          (cperl-moose-add-keywords)
+          )
+        (goto-char (point-min))
+        (when (re-search-forward
+               "^[\t ]*\\(use\\|require\\)[\t ]+Plack::Builder\\W" nil t)
+          (cperl-plack-add-keywords)
+          )
+        )
+      )
+    )
   ;;  haj 2020-06-25: Autodetect keywords - end of hack
   ;; Until Emacs is multi-threaded, we do not actually need it local:
   (make-local-variable 'cperl-font-locking)
@@ -8679,11 +8703,7 @@ do extra unwind via `cperl-unwind-to-safe'."
 ;;;;    There's no disabling yet.
 
 (defclass cperl--keyword-set ()
-  ((name :initarg :name
-         :initform ""
-         :type string
-         :custom string
-         :documentation "The (probably useless) name of this keyword set")
+  (
    (namespace-keywords :initarg :namespace-keywords
                        :initform nil
                        :type list
@@ -8791,8 +8811,8 @@ highlighting, intenting, and indexing."
   "New keywords introduced by Moose, mostly good enough for Moo as well.")
 
 (defun cperl-moose-add-keywords ()
-  "Add moose keywords to the keyword lst and re-compile
-the regulaer expressions used by `cperl-mode'."
+  "Add moose keywords to the keyword list and re-compile
+the regular expressions used by `cperl-mode'."
   (let ((keywords
          (cperl--keyword-set
           :nonoverridable-keywords cperl-moose-nonoverridable-keywords)))
@@ -8800,11 +8820,20 @@ the regulaer expressions used by `cperl-mode'."
   (cperl-collect-keyword-regexps)
   (setq cperl-faces-init nil))
 
-(defun cperl-moose-activate-keywords ()
-  "Add and activate Moose keywords in this buffer."
-  (interactive)
-  (let ((cperl--force-moose t))
-    (cperl-mode)))
+;;; Plack keywords
+(defvar cperl-plack-nonoverridable-keywords
+  '("builder" "enable" "enable_if" "mount")
+  "Keywords defined by the DSL of Plack::Builder.")
+(defun cperl-plack-add-keywords ()
+  "Add plack keywords to the keyword list and re-compile
+the regular expressions used by cperl-mode."
+  (let ((keywords
+         (cperl--keyword-set
+          :nonoverridable-keywords cperl-plack-nonoverridable-keywords)))
+    (cperl--add-keywords keywords)
+    )
+  (cperl-collect-keyword-regexps)
+  )
 
 (provide 'cperl-mode)
 
