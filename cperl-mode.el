@@ -142,8 +142,7 @@
 (defgroup cperl-keyword-sets nil
   "Add keywords coming from Perl modules"
   :prefix "cperl-" ;; how is this used? -- haj 2020-06-20
-  :group 'cperl
-  )
+  :group 'cperl)
 
 
 (defcustom cperl-extra-newline-before-brace nil
@@ -1785,11 +1784,7 @@ or as help on variables `cperl-tips', `cperl-problems',
         (goto-char (point-min))
         (when (re-search-forward
                "^[\t ]*\\(use\\|require\\)[\t ]+Plack::Builder\\W" nil t)
-          (cperl-plack-add-keywords)
-          )
-        )
-      )
-    )
+          (cperl-plack-add-keywords)))))
   ;;  haj 2020-06-25: Autodetect keywords - end of hack
   ;; Until Emacs is multi-threaded, we do not actually need it local:
   (make-local-variable 'cperl-font-locking)
@@ -8833,10 +8828,8 @@ the regular expressions used by cperl-mode."
   (let ((keywords
          (cperl--keyword-set
           :nonoverridable-keywords cperl-plack-nonoverridable-keywords)))
-    (cperl--add-keywords keywords)
-    )
-  (cperl-collect-keyword-regexps)
-  )
+    (cperl--add-keywords keywords))
+  (cperl-collect-keyword-regexps))
 
 (provide 'cperl-mode)
 
