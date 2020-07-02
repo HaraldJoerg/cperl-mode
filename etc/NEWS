@@ -73,6 +73,14 @@ errors nor warnings.
 All erros in the old code have been fixed, but not all of the
 warnings.
 
+*** Eliminating obsolete stuff
+
+CPerl had its own multi-line font locking, which is no longer needed
+with current font-lock.  It also refers to a feature "font-lock-extra"
+and to "choose-color.el" which are no longer available, but also not
+needed by cperl-mode.  All conditionals checking for these features
+have been removed.
+
 ----------------------------------------------------------------------
 This file is not (or: not yet) part of GNU Emacs.
 
