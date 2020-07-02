@@ -32,7 +32,7 @@ about indenting styles, and also provides the corresponding settings
 for Emacs.  These settings are now available as a new indenting style
 "PBP".
 
-*** Indexing: "package NAME { ...; }" is now availabe in imenu
+*** Indexing: "package NAME { ...; }" is now available in imenu
 
 In previous versions, neither the package was recognized as such,
 nor were subroutines within that package assigned to the correct
@@ -40,7 +40,7 @@ namespace.
 
 ** New Feature: Recognize keywords provided by frameworks (experimental)
 
-This feature, in particular its activation and customizaztion, are
+This feature, in particular its activation and customization, are
 experimental and subject to change.
 
 *** New customization group: cperl-keyword-sets
@@ -70,7 +70,7 @@ Elisp style is monitored with leotaku's elisp-check as a GitHub
 action, and all new code conforms to the recommendations without
 errors nor warnings.
 
-All erros in the old code have been fixed, but not all of the
+All errors in the old code have been fixed, but not all of the
 warnings.
 
 *** Eliminating obsolete stuff
@@ -80,6 +80,16 @@ with current font-lock.  It also refers to a feature "font-lock-extra"
 and to "choose-color.el" which are no longer available, but also not
 needed by cperl-mode.  All conditionals checking for these features
 have been removed.
+
+*** Test files
+
+For the bugs fixed with this this fork of cperl-mode, there are now
+the first test files in test/lisp/progmodes/cperl-mode.
+
+I'm have limited elisp experience and I've just started to learn ERT.
+So I know these tests are lame, and guess that there are better ways
+to do so.  I'll decide later whether I'll collect all the tests in one
+file.
 
 ----------------------------------------------------------------------
 This file is not (or: not yet) part of GNU Emacs.
