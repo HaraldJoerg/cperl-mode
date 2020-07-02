@@ -8709,10 +8709,11 @@ do extra unwind via `cperl-unwind-to-safe'."
       (cperl-fontify-syntaxically to)))))
 
 (defvar cperl-version
-  (let ((v  "Revision: 6.2"))
+  (let ((v  "Revision: 7.0"))
     (string-match ":\\s *\\([0-9.]+\\)" v)
     (substring v (match-beginning 1) (match-end 1)))
-  "Version of IZ-supported CPerl package this file is based on.")
+  "Derived from version 6.2, the latest version supported by IZ.")
+
 
 ;;;; cperl-mode extensions for non-core keyword sets
 ;;;;
