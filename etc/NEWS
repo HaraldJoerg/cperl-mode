@@ -1,0 +1,97 @@
+cperl-mode -- history of user-visible changes.
+
+Copyright (C) 2020-2020 to be clarified
+
+This file is about changes in cperl-mode version 7.0
+
+See the end of the file for license conditions.
+
+Please file bug reports as issues under the github repository
+https://github.com/HaraldJoerg/cperl-mode.
+
+* cperl-mode
+
+** Bug fixes
+
+*** Fontification: "$a++ / $c" is now recognized as a division
+
+Previous versions would take the slash as the start of a regular
+expression, fontify it accordingly and get confused about the missing
+RE terminator.  Reported by choroba in
+https://github.com/jrockway/cperl-mode/issues/45.
+
+*** Indentation: Code after "package NAME { ...; }" isn't indented
+
+In previous versions, cperl-mode failed to recognize the braces as a
+block and indented the following code as continued statement.
+
+*** Indentation: Add PBP's recommendation as an indentation style
+
+In his book "Perl Best Practices", Damian Conway gives recommendations
+about indenting styles, and also provides the corresponding settings
+for Emacs.  These settings are now available as a new indenting style
+"PBP".
+
+*** Indexing: "package NAME { ...; }" is now availabe in imenu
+
+In previous versions, neither the package was recognized as such,
+nor were subroutines within that package assigned to the correct
+namespace.
+
+** New Feature: Recognize keywords provided by frameworks (experimental)
+
+This feature, in particular its activation and customizaztion, are
+experimental and subject to change.
+
+*** New customization group: cperl-keyword-sets
+
+This group comes with one new option cperl-automatic-keyword-sets
+(default: nil).  If true, then cperl-mode applies heuristics which
+barewords are "keywords" of some framework.  Currently this works for
+the keywords of Moo/Moose and Plack::Builder.
+
+Both the heuristics to detect applicability and the mechanism to
+inject keyword sets are work in progress.
+
+** Changes invisible to users
+
+*** Regexp refactoring
+
+Many of the regular expressions in cperl-mode were hard-coded
+literals (or even optimized literals).  Now, the lists of keywords
+are actual elisp lists and are converted to optimized regular
+expressions at runtime.  That way, different cperl-mode buffers
+can enjoy different keyword sets:  Either reflecting different
+Perl versions, or extensions which come with their own keywords.
+
+*** Style changes
+
+Elisp style is monitored with leotaku's elisp-check as a GitHub
+action, and all new code conforms to the recommendations without
+errors nor warnings.
+
+All erros in the old code have been fixed, but not all of the
+warnings.
+
+----------------------------------------------------------------------
+This file is not (or: not yet) part of GNU Emacs.
+
+GNU Emacs is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+GNU Emacs is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
+
+
+Local variables:
+coding: utf-8
+mode: outline
+paragraph-separate: "[ 	]*$"
+end:
