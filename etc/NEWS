@@ -25,25 +25,20 @@ https://github.com/jrockway/cperl-mode/issues/45.
 In previous versions, cperl-mode failed to recognize the braces as a
 block and indented the following code as continued statement.
 
-*** Indentation: Add PBP's recommendation as an indentation style
-
-In his book "Perl Best Practices", Damian Conway gives recommendations
-about indenting styles, and also provides the corresponding settings
-for Emacs.  These settings are now available as a new indenting style
-"PBP".
-
 *** Indexing: "package NAME { ...; }" is now available in imenu
 
 In previous versions, neither the package was recognized as such,
 nor were subroutines within that package assigned to the correct
 namespace.
 
-** New Feature: Recognize keywords provided by frameworks (experimental)
+** New Features
+
+*** Recognize keywords provided by frameworks (experimental)
 
 This feature, in particular its activation and customization, are
 experimental and subject to change.
 
-*** New customization group: cperl-keyword-sets
+**** New customization group: cperl-keyword-sets
 
 This group comes with one new option cperl-automatic-keyword-sets
 (default: nil).  If true, then cperl-mode applies heuristics which
@@ -52,6 +47,13 @@ the keywords of Moo/Moose and Plack::Builder.
 
 Both the heuristics to detect applicability and the mechanism to
 inject keyword sets are work in progress.
+
+*** Indentation: Add PBP's recommendation as an indentation style
+
+In his book "Perl Best Practices", Damian Conway gives recommendations
+about indenting styles, and also provides the corresponding settings
+for Emacs.  These settings are now available as a new indenting style
+"PBP".
 
 ** Changes invisible to users
 
