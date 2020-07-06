@@ -20,6 +20,15 @@ expression, fontify it accordingly and get confused about the missing
 RE terminator.  Reported by choroba in
 https://github.com/jrockway/cperl-mode/issues/45.
 
+*** Fontification: Edge case "terminator occurs in here-doc" fixed
+
+For a non-indented here-doc, the terminator needs to start in the
+first column.  Versions following the initial support for indented
+here-docs would interpret the terminator string as valid if it is only
+preceded by whitespace.
+See https://github.com/HaraldJoerg/cperl-mode/issues/4 for details
+and testcases.
+
 *** Indentation: Code after "package NAME { ...; }" isn't indented
 
 In previous versions, cperl-mode failed to recognize the braces as a
