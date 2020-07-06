@@ -38,7 +38,6 @@
       (font-lock-fontify-buffer)
       (goto-char (point-min))
       (re-search-forward regexp)
-      (message "%s" (match-string 0))
       (get-text-property (match-beginning 0) 'face))))
 
 (ert-deftest jrockway-issue-45 ()
