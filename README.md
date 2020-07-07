@@ -31,7 +31,7 @@ Also, I expect to make slow progress, as I'm doing this in my spare time.
 ## Status
 
 The current status is reported in the
-(https://github.com/HaraldJoerg/cperl-mode/blob/master/etc/NEWS)[NEWS]
+[NEWS](https://github.com/HaraldJoerg/cperl-mode/blob/master/etc/NEWS)
 file, which follows Emacs conventions for style and location.
 
 ## The Future
@@ -39,8 +39,8 @@ file, which follows Emacs conventions for style and location.
 Once this fork is considered sufficiently stable, it is intended to
 distribute it using the usual Emacs channels: One option is to make it
 the official version which ships with Emacs.  In that case, publishing
-it via (https://elpa.gnu.org/)[ELPA] makes sense, to allow adjustments
+it via [ELPA](https://elpa.gnu.org/) makes sense, to allow adjustments
 to new versions of Perl or new features on our own schedule.
-Alternatively, it could be published on MELPA, but in that case it
-should be renamed (the package, and _all_ the symbols within) to avoid
-confusion with the official package.
+Alternatively, it could be published on [MELPA](https://melpa.org/),
+but in that case it should be renamed (the package, and _all_ the
+symbols within) to avoid confusion with the official package.
