@@ -1299,9 +1299,14 @@ when it finds the modules which export them in the buffer's file."
   :type 'boolean
   :group 'cperl-keyword-sets)
 
-(defvar cperl-core-namespace-keywords
-  '("package" "require" "use" "no" "bootstrap")
+(defvar cperl-core-namespace-declare-keywords
+  '("package" "bootstrap")
   "Keywords which introduce a namespace in Perl")
+
+(defvar cperl-core-namespace-use-keywords
+  '("require" "use" "no")
+  "Keywords which introduce a namespace in Perl")
+
 
 (defvar cperl-core-functions-for-font-lock
   '("CORE" "__FILE__" "__LINE__" "__PACKAGE__" "__SUB__"
@@ -1365,6 +1370,7 @@ when it finds the modules which export them in the buffer's file."
 
 (defvar cperl-core-flow-control-keywords
   (append cperl-core-sub-keywords
+          cperl-core-namespace-declare-keywords
           cperl-core-declaring-keywords
           cperl-core-block-init-keywords
           cperl-core-block-continuation-keywords
@@ -1377,7 +1383,6 @@ when it finds the modules which export them in the buffer's file."
             "for" "foreach" "finally"
             "given" "goto"
             "last"
-            "package"
             "next"
             "redo" "require" "return"
             "try"
@@ -1408,55 +1413,144 @@ when it finds the modules which export them in the buffer's file."
   '("break" "continue" "goto" "last" "next" "redo")
   "Keywords which require a label as target")
 
+(defvar cperl-keyword-set-alist nil
+  "Maps regular expressions to keyword sets.
+Each element in this list is a two-element list consisting of a
+regular expression, and an extra keyword set to be applied if the
+regexp is found in the current buffer.")
+
+(defun cperl-add-keyword-set (regexp keyword-set)
+  "Define a new KEYWORD-SET to be applied if a buffer matches REGEXP.
+A keyword set is a property list matching keyword categories to
+lists of keywords.
+
+Example:  (cperl-add-keyword-set \"use MooseX::Declare;\"
+                                 '(:namespace-declare (\"class\")
+                                   :sub (\"method\")
+                                   :functions (\"has\" \"extends\")))
+
+In this (simplified and incomplete) example, for a Perl module
+which uses MooseX::Declare: \"class\" introduces a namespace,
+\"method\" is treated as starting a subroutine, and \"has\" and
+extends are shown like builtin functions."
+  (add-to-list 'cperl-keyword-set-alist
+               (list regexp keyword-set)))
+
+(defvar-local cperl-keywords-plist nil
+  "The categorized list of Perl keywords.")
+
+(defun cperl--initialize-keywords-plist ()
+  "Inititialize the buffer-local plist of keywords.
+The initial value contains the keywords from the Perl core."
+  (setq cperl-keywords-plist
+        (list ':namespace-declare  cperl-core-namespace-declare-keywords
+              ':namespace-use      cperl-core-namespace-use-keywords
+              ':functions          cperl-core-functions-for-font-lock
+              ':flow-control       cperl-core-flow-control-keywords
+              ':nonoverridable     cperl-core-nonoverridable-keywords
+              ':sub                cperl-core-sub-keywords
+              ':after-label        cperl-core-after-label-keywords
+              ':before-label       cperl-core-before-label-keywords
+              ':declaring          cperl-core-declaring-keywords
+              ':block-init         cperl-core-block-init-keywords
+              ':block-continuation cperl-core-block-continuation-keywords
+              ':block              (append cperl-core-block-init-keywords
+                                           cperl-core-block-continuation-keywords)
+              ':named-block        cperl-core-named-block-keywords
+              ':special-sub        cperl-core-special-sub-keywords)))
+
+
+(defun cperl-add-keywords (keyword-plist)
+  "Add the keywords according to KEYWORD-PLIST.
+KEYWORD-PLIST is a property list mapping keyword list categories to their
+keyword lists."
+  (let ((plist keyword-plist))
+    (while plist
+      (let ((category (car plist))
+            (keywords (car (cdr plist)))
+            (rest     (nthcdr 2 plist)))
+        (plist-put cperl-keywords-plist
+                   category
+                   (append (plist-get cperl-keywords-plist category) keywords))
+        (setq plist rest)))))
+
+(defun cperl-set-keywords (&rest keyword-plist)
+  "Set the keywords according to KEYWORD-PLIST.
+KEYWORD-PLIST is a property list mapping keyword list names to their
+keyword lists."
+  (let ((plist keyword-plist))
+    (while plist
+      (let ((category (car plist))
+            (keywords (car (cdr plist)))
+            (rest     (nthcdr 2 plist)))
+        (plist-put cperl-keywords-plist category keywords)
+        (setq plist rest)))))
+
+(defun cperl-keywords (category)
+  "Return the list of keywords in CATEGORY."
+  (plist-get cperl-keywords-plist category))
+
+
+
 ;; Following are the initial values for keyword lists and regular expressions.
 ;; All of them are buffer-local so that keyword sets can be added per buffer,
 ;; and regular expressions derived from these keyword sets remain buffer-local
 ;; for fontification.
-(defvar-local cperl-namespace-keywords          cperl-core-namespace-keywords)
-(defvar-local cperl-functions-for-font-lock     cperl-core-functions-for-font-lock)
-(defvar-local cperl-flow-control-keywords       cperl-core-flow-control-keywords)
-(defvar-local cperl-nonoverridable-keywords     cperl-core-nonoverridable-keywords)
-(defvar-local cperl-sub-keywords                cperl-core-sub-keywords)
-(defvar-local cperl-after-label-keywords        cperl-core-after-label-keywords)
-(defvar-local cperl-before-label-keywords       cperl-core-before-label-keywords)
-(defvar-local cperl-declaring-keywords          cperl-core-declaring-keywords)
-(defvar-local cperl-block-init-keywords         cperl-core-block-init-keywords)
-(defvar-local cperl-block-continuation-keywords cperl-core-block-continuation-keywords)
-(defvar-local cperl-block-keywords (append      cperl-block-init-keywords
-                                                cperl-block-continuation-keywords))
-(defvar-local cperl-named-block-keywords        cperl-core-named-block-keywords)
-(defvar-local cperl-special-sub-keywords        cperl-core-special-sub-keywords)
+;; (defvar-local cperl-namespace-keywords          cperl-core-namespace-keywords)
+;; (defvar-local cperl-functions-for-font-lock     cperl-core-functions-for-font-lock)
+;; (defvar-local cperl-flow-control-keywords       cperl-core-flow-control-keywords)
+;; (defvar-local cperl-nonoverridable-keywords     cperl-core-nonoverridable-keywords)
+;; (defvar-local cperl-sub-keywords                cperl-core-sub-keywords)
+;; (defvar-local cperl-after-label-keywords        cperl-core-after-label-keywords)
+;; (defvar-local cperl-before-label-keywords       cperl-core-before-label-keywords)
+;; (defvar-local cperl-declaring-keywords          cperl-core-declaring-keywords)
+;; (defvar-local cperl-block-init-keywords         cperl-core-block-init-keywords)
+;; (defvar-local cperl-block-continuation-keywords cperl-core-block-continuation-keywords)
+;; (defvar-local cperl-block-keywords (append      cperl-block-init-keywords
+;;                                                 cperl-block-continuation-keywords))
+;; (defvar-local cperl-named-block-keywords        cperl-core-named-block-keywords)
+;; (defvar-local cperl-special-sub-keywords        cperl-core-special-sub-keywords)
 
-(defvar-local cperl--namespace-keywords-regexp (regexp-opt cperl-namespace-keywords))
-(defvar-local cperl--functions-regexp          (regexp-opt cperl-functions-for-font-lock))
-(defvar-local cperl--flow-control-regexp       (regexp-opt cperl-flow-control-keywords))
-(defvar-local cperl--nonoverridable-regexp     (regexp-opt cperl-nonoverridable-keywords))
-(defvar-local cperl--sub-regexp                (regexp-opt cperl-sub-keywords))
-(defvar-local cperl--after-label-regexp        (regexp-opt cperl-after-label-keywords))
-(defvar-local cperl--before-label-regexp       (regexp-opt cperl-before-label-keywords))
-(defvar-local cperl--declaring-regexp          (regexp-opt cperl-declaring-keywords))
-(defvar-local cperl--block-init-regexp         (regexp-opt cperl-block-init-keywords))
-(defvar-local cperl--block-continuation-regexp (regexp-opt cperl-block-continuation-keywords))
-(defvar-local cperl--block-regexp              (regexp-opt cperl-block-keywords))
-(defvar-local cperl--named-block-regexp        (regexp-opt cperl-named-block-keywords))
-(defvar-local cperl--special-sub-regexp        (regexp-opt cperl-special-sub-keywords))
+(defvar-local cperl--namespace-declare-regexp  nil)
+(defvar-local cperl--namespace-use-regexp      nil)
+(defvar-local cperl--namespace-regexp          nil)
+(defvar-local cperl--functions-regexp          nil)
+(defvar-local cperl--flow-control-regexp       nil)
+(defvar-local cperl--nonoverridable-regexp     nil)
+(defvar-local cperl--sub-regexp                nil)
+(defvar-local cperl--after-label-regexp        nil)
+(defvar-local cperl--before-label-regexp       nil)
+(defvar-local cperl--declaring-regexp          nil)
+(defvar-local cperl--block-init-regexp         nil)
+(defvar-local cperl--block-continuation-regexp nil)
+(defvar-local cperl--block-regexp              nil)
+(defvar-local cperl--named-block-regexp        nil)
+(defvar-local cperl--special-sub-regexp        nil)
 
 (defun cperl-collect-keyword-regexps ()
   "Merge all keyword lists to optimized regular expressions which
-   will actually be used by `cperl-mode'."
-  (setq cperl--namespace-keywords-regexp    (regexp-opt cperl-namespace-keywords)
-        cperl--functions-regexp             (regexp-opt cperl-functions-for-font-lock)
-        cperl--flow-control-regexp          (regexp-opt cperl-flow-control-keywords)
-        cperl--nonoverridable-regexp        (regexp-opt cperl-nonoverridable-keywords)
-        cperl--sub-regexp                   (regexp-opt cperl-sub-keywords)
-        cperl--after-label-regexp           (regexp-opt cperl-after-label-keywords)
-        cperl--before-label-regexp          (regexp-opt cperl-before-label-keywords)
-        cperl--declaring-regexp             (regexp-opt cperl-declaring-keywords)
-        cperl--block-init-regexp            (regexp-opt cperl-block-init-keywords)
-        cperl--block-continuation-regexp    (regexp-opt cperl-block-continuation-keywords)
-        cperl--block-regexp                 (regexp-opt cperl-block-keywords)
-        cperl--named-block-regexp           (regexp-opt cperl-named-block-keywords)
-        cperl--special-sub-regexp           (regexp-opt cperl-special-sub-keywords)))
+       will actually be used by `cperl-mode'."
+  (setq cperl--namespace-declare-regexp     (regexp-opt (cperl-keywords ':namespace-declare))
+        cperl--namespace-use-regexp         (regexp-opt (cperl-keywords ':namespace-use))
+        cperl--namespace-regexp             (regexp-opt (append (cperl-keywords ':namespace-declare)
+                                                                (cperl-keywords ':namespace-use)))
+        cperl--functions-regexp             (regexp-opt (cperl-keywords ':functions))
+        cperl--flow-control-regexp          (regexp-opt (append (cperl-keywords ':flow-control)
+                                                                (cperl-keywords ':sub)
+                                                                (cperl-keywords ':namespace-declare)
+                                                                (cperl-keywords ':namespace-use)
+                                                                (cperl-keywords ':declaring)))
+        cperl--nonoverridable-regexp        (regexp-opt (cperl-keywords ':nonoverridable))
+        cperl--sub-regexp                   (regexp-opt (cperl-keywords ':sub))
+        cperl--after-label-regexp           (regexp-opt (cperl-keywords ':after-label))
+        cperl--before-label-regexp          (regexp-opt (cperl-keywords ':before-label))
+        cperl--declaring-regexp             (regexp-opt (cperl-keywords ':declaring))
+        cperl--block-init-regexp            (regexp-opt (cperl-keywords ':block-init))
+        cperl--block-continuation-regexp    (regexp-opt (cperl-keywords ':block-continuation))
+        cperl--block-regexp                 (regexp-opt (cperl-keywords ':block))
+        cperl--named-block-regexp           (regexp-opt (cperl-keywords ':named-block))
+        cperl--special-sub-regexp           (regexp-opt (cperl-keywords ':special-sub)))
+  )
 
 
 ;; Is incorporated in `cperl-imenu--function-name-regexp-perl'
@@ -1498,28 +1592,28 @@ the last)."
    "\\)?"                               ; END n+6=proto-group
    ))
 
-;; Details of groups in this are used in `cperl-imenu--create-perl-index'
-;;  and `cperl-outline-level'.
-;; Was: 2=sub|package; now 2=package-group, 5=package-name 8=sub-name (+3)
-(defvar cperl-imenu--function-name-regexp-perl
-  (concat
-   "^\\("                               ; 1 = all
-       "\\([ \t]*package"               ; 2 = package-group
-          "\\("                                 ; 3 = package-name-group
-            cperl-white-and-comment-rex ; 4 = pre-package-name
-               "\\([a-zA-Z_0-9:']+\\)\\)?\\)" ; 5 = package-name
-       "\\|"
-          "[ \t]*"
-          cperl--sub-regexp
-          (cperl-after-sub-regexp 'named nil) ; 8=name 11=proto 14=attr-start
-          cperl-maybe-white-and-comment-rex     ; 15=pre-block
-   "\\|"
-     "=head\\([1-4]\\)[ \t]+"           ; 16=level
-     "\\([^\n]+\\)$"                    ; 17=text
-   "\\)"))
+;; ;; Details of groups in this are used in `cperl-imenu--create-perl-index'
+;; ;;  and `cperl-outline-level'.
+;; ;; Was: 2=sub|package; now 2=package-group, 5=package-name 8=sub-name (+3)
+;; (defvar cperl-imenu--function-name-regexp-perl
+;;   (concat
+;;    "^\\("                               ; 1 = all
+;;        "\\([ \t]*package"               ; 2 = package-group
+;;           "\\("                                 ; 3 = package-name-group
+;;             cperl-white-and-comment-rex ; 4 = pre-package-name
+;;                "\\([a-zA-Z_0-9:']+\\)\\)?\\)" ; 5 = package-name
+;;        "\\|"
+;;           "[ \t]*"
+;;           cperl--sub-regexp
+;;           (cperl-after-sub-regexp 'named nil) ; 8=name 11=proto 14=attr-start
+;;           cperl-maybe-white-and-comment-rex     ; 15=pre-block
+;;    "\\|"
+;;      "=head\\([1-4]\\)[ \t]+"           ; 16=level
+;;      "\\([^\n]+\\)$"                    ; 17=text
+;;    "\\)"))
 
-(defvar cperl-outline-regexp
-  (concat cperl-imenu--function-name-regexp-perl "\\|" "\\`"))
+;; (defvar cperl-outline-regexp
+;;   (concat cperl-imenu--function-name-regexp-perl "\\|" "\\`"))
 
 (defvar cperl-mode-syntax-table nil
   "Syntax table in use in CPerl mode buffers.")
@@ -1772,22 +1866,56 @@ or as help on variables `cperl-tips', `cperl-problems',
   (if (cperl-val 'cperl-electric-keywords)
       (abbrev-mode 1))
   (set-syntax-table cperl-mode-syntax-table)
-  ;; haj 2020-06-25: Autodetect keywords - a crude hack
-  ;; This ought to be replaced by a hook into which keyword sets can jump in
-  (save-excursion
-    (when cperl-automatic-keyword-sets
-      (progn
-        (goto-char (point-min))
-        (when (re-search-forward
-               "^[\t ]*\\(use\\|require\\)[\t ]+Moo\\(se\\)?\\W" nil t)
-          (cperl-moose-add-keywords))
-        (goto-char (point-min))
-        (when (re-search-forward
-               "^[\t ]*\\(use\\|require\\)[\t ]+Plack::Builder\\W" nil t)
-          (cperl-plack-add-keywords)))))
-  ;;  haj 2020-06-25: Autodetect keywords - end of hack
+  ;; haj 2020-07-09: Autodetect keywords - now a bit better
+  (cperl--initialize-keywords-plist)
+  (when cperl-automatic-keyword-sets
+    (cperl-apply-keyword-sets))
+  (cperl-collect-keyword-regexps)
+  ;;  haj 2020-07-09: Autodetect keywords - end of hack
   ;; Until Emacs is multi-threaded, we do not actually need it local:
   (make-local-variable 'cperl-font-locking)
+
+  ;;; imenu setup for the current buffer
+  ;; Details of groups in this are used in `cperl-imenu--create-perl-index'
+  ;;  and `cperl-outline-level'.
+  ;; Was: 2=sub|package; now 2=package-group, 5=package-name 8=sub-name (+3)
+  (set (make-local-variable
+        'cperl-imenu--function-name-regexp-perl)
+        (concat
+         "^\\("                               ; 1 = all
+         "\\([ \t]*"                          ; 2 = package-group
+         cperl--namespace-declare-regexp
+         "\\("                                 ; 3 = package-name-group
+         cperl-white-and-comment-rex ; 4 = pre-package-name
+         "\\([a-zA-Z_0-9:']+\\)\\)?\\)" ; 5 = package-name
+         "\\|"
+         "[ \t]*"
+         cperl--sub-regexp
+         (cperl-after-sub-regexp 'named nil) ; 8=name 11=proto 14=attr-start
+         cperl-maybe-white-and-comment-rex     ; 15=pre-block
+         "\\|"
+         "=head\\([1-4]\\)[ \t]+"           ; 16=level
+         "\\([^\n]+\\)$"                    ; 17=text
+         "\\)"))
+  (set (make-local-variable
+        'cperl-outline-regexp)
+        (concat cperl-imenu--function-name-regexp-perl "\\|" "\\`"))
+
+  ;; etags setup
+  (setq cperl-tags-hier-regexp-list
+        (concat
+         "^\\("
+         "\\("
+         cperl--namespace-declare-regexp
+         "\\)\\>"
+         "\\|"
+         cperl--sub-regexp "\\>[^\n]+::"
+         "\\|"
+         "[a-zA-Z_][a-zA-Z_0-9:]*(\C-?[^\n]+::" ; XSUB?
+         "\\|"
+         "[ \t]*BOOT:\C-?[^\n]+::"                 ; BOOT section
+         "\\)"))
+  ;; outline setup
   (set (make-local-variable 'outline-regexp) cperl-outline-regexp)
   (set (make-local-variable 'outline-level) 'cperl-outline-level)
   (set (make-local-variable 'add-log-current-defun-function)
@@ -1805,6 +1933,7 @@ or as help on variables `cperl-tips', `cperl-problems',
   (set (make-local-variable 'comment-end) "")
   (set (make-local-variable 'comment-column) cperl-comment-column)
   (set (make-local-variable 'comment-start-skip) "#+ *")
+
 
 ;;       "[ \t]*sub"
 ;;        (cperl-after-sub-regexp 'named nil) ; 8=name 11=proto 14=attr-start
@@ -4871,7 +5000,9 @@ statement would start; thus the block in ${func()} does not count."
                                (progn
                                  (forward-sexp -1)
                                  (looking-at
-                                  (concat "\\(?:" cperl--sub-regexp "\\|package\\)[ \t\n\f#]")))))))
+                                  (concat "\\(?:" cperl--sub-regexp
+                                          "\\|" cperl--namespace-declare-regexp
+                                          "\\)[ \t\n\f#]")))))))
                 ;; What precedes is not word...  XXXX Last statement in sub???
                 (cperl-after-expr-p lim))))
       (error nil))))
@@ -5743,7 +5874,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
                   2 '(if (eq (char-after (cperl-1- (match-end 0))) ?\{ )
                          'font-lock-function-name-face
                        'font-lock-variable-name-face))
-            (list (concat "\\<" cperl--namespace-keywords-regexp
+            (list (concat "\\<" cperl--namespace-regexp
                           "[ \t]+\\([a-zA-Z_][a-zA-Z_0-9:]*\\)[ \t;]")
                   1 font-lock-function-name-face) ; require A if B;
             '("^[ \t]*format[ \t]+\\([a-zA-Z_][a-zA-Z_0-9:]*\\)[ \t]*=[ \t]*$"
@@ -6007,7 +6138,7 @@ Style of printout regulated by the variable `cperl-ps-print-face-properties'."
 ;;              ps-underlined-faces))
 ;;   (cons 'font-lock-type-face ps-underlined-faces))
 
-
+;;;; (2020-07-10 haj) What does this do?
 (cperl-windowed-init)
 
 (defconst cperl-styles-entries
@@ -6497,19 +6628,65 @@ Will not move the position at the start to the left."
                  (re-search-forward search end t)
                  (goto-char (match-beginning 0)))))))) ; No body
 
+;; 2020-07-12: While they are technically possible under 'use utf8',
+;; we don't support non-ASCII identifiers, and we also reject to
+;; process package names starting with or ending with colon pairs.
+(defconst cperl--basic-identifier-regexp
+  "\\(?:[a-zA-Z_][a-zA-Z0-9_]*\\)"
+  "A regexp for basic identifiers (ASCII only), without sigil.")
+
+(defconst cperl--identifier-regexp
+  (concat cperl--basic-identifier-regexp
+          "\\(?:\\(?:'\\|::\\)" cperl--basic-identifier-regexp "\\)*")
+  "A regexp for Perl identifiers, without sigil, qualified with a package.")
+
+(defconst cperl--version-regexp
+  (concat
+   "\\(?:"
+   "\\(?:v[[:digit:]]+\\(?:\\.[[:digit:]]+\\)\\{2,\\}\\)" ;; v1.2.3
+   "\\|\\.[[:digit:]]+"                                   ;; .001
+   "\\|[[:digit:]]+\\.[[:digit:]]*"                       ;; 0.01 or 12.
+   "\\|[[:digit:]]+"                                      ;; 42
+   "\\)")
+  "A regexp for \"good, boring\" Perl version numbers.")
+
+(defun cperl--setup-etags-args (&optional add all)
+  "Prepare the appropriate regular expressions for etags."
+  `("-l" "none" "-r"
+    ;; 1=fullname  2=package? 3=name 4=proto? 5=attrs? (VERY APPROX!)
+    ,(concat "/[ \t]*\\<"                           ;; etags start at BOL
+              cperl--sub-regexp                     ;; subroutine declarator
+              "[ \\t]+"                             ;;
+              "\\(" cperl--identifier-regexp "\\)"  ;; qualified subroutine name
+              "[ \\t]*\\(?:([^()]*)[ \t]*\\)?"      ;; prototype / signature
+              "\\(?:[ \t]*:[^#{;]*\\)?"             ;; optional attributes
+              "\\(?:[{#]\\|$\\)"                    ;; brace or comment or EOL
+              "/\\1/")                              ;; name goes to TAGS
+    "-r"
+    ,(concat "/[ \t]*\\<"                           ;; etags start at BOL
+             cperl--namespace-declare-regexp        ;; namespace declarator
+             "[ \\t]+"                              ;;
+             "\\(" cperl--identifier-regexp "\\)"   ;; qualified package name
+             "\\(?:[ \\t]+" cperl--version-regexp   ;; package NAME VERSION
+             "\\)?"                                 ;; ...is optional
+             "\\(?:[ \\t]+"                         ;;
+             cperl--namespace-use-regexp            ;; extends and similar stuff
+             "[ \\t]+" cperl--identifier-regexp     ;; followed by another package
+             "\\)*"                                 ;; FIXME: Is there a comma?
+             "[ \\t]*\\(?:[#;{]\\|$\\)"             ;; and some closing thingy
+             "/\\1/")                               ;; full name goes to TAGS
+    "-r"
+    ,(concat "/[ \t]*\\<\\("
+             cperl--namespace-declare-regexp       ;; anonymous declarator
+             "\\)[ \\t]*;/\\1;/")))                ;; declarator goes to TAGS
+
 (defun cperl-etags (&optional add all files) ;; NOT USED???
   "Run etags with appropriate options for Perl files.
 If optional argument ALL is `recursive', will process Perl files
 in subdirectories too."
   (interactive)
   (let ((cmd "etags")
-        (args `("-l" "none" "-r"
-                ;;                        1=fullname  2=package?             3=name                       4=proto?             5=attrs? (VERY APPROX!)
-                ,(concat "/\\<" cperl--sub-regexp "[ \\t]+\\(\\([a-zA-Z0-9:_]*::\\)?\\([a-zA-Z0-9_]+\\)\\)[ \\t]*\\(([^()]*)[ \t]*\\)?\\([ \t]*:[^#{;]*\\)?\\([{#]\\|$\\)/\\3/")
-                "-r"
-                "/\\<package[ \\t]+\\(\\([a-zA-Z0-9:_]*::\\)?\\([a-zA-Z0-9_]+\\)\\)[ \\t]*\\([#;]\\|$\\)/\\1/"
-                "-r"
-                "/\\<\\(package\\)[ \\t]*;/\\1;/"))
+        (args (cperl--setup-etags-args))
         res)
     (if add (setq args (cons "-a" args)))
     (or files (setq files (list buffer-file-name)))
@@ -6724,6 +6901,8 @@ Does not move point."
               (progn
                 (insert (elt elt 3)
                         127
+                        ;; FIXME (2020-07-10 haj): Does the next line
+                        ;; need to consider class as well?
                         (if (string-match "^package " (car elt))
                             (substring (car elt) 8)
                           (car elt) )
@@ -6859,18 +7038,6 @@ Use as
         (if (fboundp 'initialize-new-tags-table) ; Do we need something special in XEmacs?
             (initialize-new-tags-table))))))
 
-(defvar cperl-tags-hier-regexp-list
-  (concat
-   "^\\("
-      "\\(package\\)\\>"
-     "\\|"
-      cperl--sub-regexp "\\>[^\n]+::"
-     "\\|"
-      "[a-zA-Z_][a-zA-Z_0-9:]*(\C-?[^\n]+::" ; XSUB?
-     "\\|"
-      "[ \t]*BOOT:\C-?[^\n]+::"                 ; BOOT section
-   "\\)"))
-
 (defvar cperl-hierarchy '(() ())
   "Global hierarchy of classes.")
 
@@ -6878,6 +7045,8 @@ Use as
 (declare-function file-of-tag "etags" (&optional relative))
 (declare-function etags-snarf-tag "etags" (&optional use-explicit))
 
+(defvar-local cperl-tags-hier-regexp-list nil
+  "A buffer-local value will be supplied when cperl-mode is started")
 (defun cperl-tags-hier-fill ()
   ;; Suppose we are in a tag table cooked by cperl.
   (goto-char 1)
@@ -8727,105 +8896,120 @@ do extra unwind via `cperl-unwind-to-safe'."
 ;;;;  - The set comes with a command cperl-<foo>-activate-keywords.
 ;;;;    There's no disabling yet.
 
-(defclass cperl--keyword-set ()
-  (
-   (namespace-keywords :initarg :namespace-keywords
-                       :initform nil
-                       :type list
-                       :custom list
-                       :documentation "Keywords followed by an unquoted Perl namespace")
-   (functions-keywords :initarg :functions-keywords
-                       :initform nil
-                       :type list
-                       :custom list
-                       :documentation "Keywords for overridable functions")
-   (sub-keywords :initarg :sub-keywords
-                 :initform nil
-                 :type list
-                 :custom list
-                 :documentation "Keywords which start subroutines")
-   (block-init-keywords :initarg :block-init-keywords
-                        :initform nil
-                        :type list
-                        :custom list
-                        :documentation "Keywords which start a block")
-   (block-continuation-keywords :initarg :block-continuation-keywords
-                                :initform nil
-                                :type list
-                                :custom list
-                                :documentation "Keywords which continue a block")
-   (named-block-keywords :initarg :named-block-keywords
-                         :initform nil
-                         :type list
-                         :custom list
-                         :documentation "Keywords which start \"special\" blocks")
-   (special-sub-keywords :initarg :special-sub-keywords
-                         :initform nil
-                         :type list
-                         :custom list
-                         :documentation "Special names for subroutines")
-   (declaring-keywords :initarg :declaring-keywords
-                       :initform nil
-                       :type list
-                       :custom list
-                       :documentation "Keywords to declare variables")
-   (flow-control-keywords :initarg :declaring-keywords
-                          :initform nil
-                          :type list
-                          :custom list
-                          :documentation "Keywords to declare variables")
-   (nonoverridable-keywords :initarg :nonoverridable-keywords
-                            :initform nil
-                            :type list
-                            :custom list
-                            :documentation "Keywords which should not be overridden")
-   (before-label-keywords :initarg :before-label-keywords
-                          :initform nil
-                          :type list
-                          :custom list
-                          :documentation "Keywords whch may be followed by a label")
-   (after-label-keywords :initarg :after-label-keywords
-                         :initform nil
-                         :type list
-                         :custom list
-                         :documentation "Keywords which may be preceded by a label")))
+;; (defun cperl--indicate-keyword-set (regex)
+;;   "Find whether REGEX is in the code"
+;;   (save-excursion
+;;     (goto-char (point-min))
+;;     (re-search-forward regex nil t)))
 
-(defun cperl--add-list (kw-list kw-append)
-  "Add the list of keywords KW-LIST to KW-APPEND.
-Keywords occuring in both lists will only appear once
-in the result."
-  (dolist (kw kw-append) (add-to-list kw-list kw)))
+(defun cperl-apply-keyword-sets ()
+  "Apply all appropriate keyword sets."
+  (save-excursion
+    (dolist (set cperl-keyword-set-alist)
+      (goto-char (point-min))
+      (when (re-search-forward (car set) nil t)
+        (apply 'cperl-add-keywords (cdr set))))))
 
-(cl-defmethod cperl--add-keywords ((kw-set cperl--keyword-set))
-  "Add KW-SET to the appropriate keyword lists.
-KW-SET is a `cperl--keyword-set' object.  From the lists
-`cperl-mode' builds regular expressions for syntax
-highlighting, intenting, and indexing."
-  (with-slots (namespace-keywords
-               functions-keywords
-               sub-keywords
-               block-init-keywords
-               block-continuation-keywords
-               named-block-keywords
-               special-sub-keywords
-               declaring-keywords
-               flow-control-keywords
-               nonoverridable-keywords
-               before-label-keywords
-               after-label-keywords)
-      kw-set
-    (cperl--add-list 'cperl-namespace-keywords namespace-keywords)
-    (cperl--add-list 'cperl-functions-keywords functions-keywords)
-    (cperl--add-list 'cperl-sub-keywords sub-keywords)
-    (cperl--add-list 'cperl-block-init-keywords block-init-keywords)
-    (cperl--add-list 'cperl-block-continuation-keywords block-continuation-keywords)
-    (cperl--add-list 'cperl-named-block-keywords named-block-keywords)
-    (cperl--add-list 'cperl-special-sub-keywords special-sub-keywords)
-    (cperl--add-list 'cperl-declaring-keywords declaring-keywords)
-    (cperl--add-list 'cperl-flow-control-keywords flow-control-keywords)
-    (cperl--add-list 'cperl-nonoverridable-keywords nonoverridable-keywords)
-    (cperl--add-list 'cperl-before-label-keywords before-label-keywords)
-    (cperl--add-list 'cperl-after-label-keywords after-label-keywords)))
+
+;; (defclass cperl--keyword-set ()
+;;   (
+;;    (namespace-keywords :initarg :namespace-keywords
+;;                        :initform nil
+;;                        :type list
+;;                        :custom list
+;;                        :documentation "Keywords followed by an unquoted Perl namespace")
+;;    (functions-keywords :initarg :functions-keywords
+;;                        :initform nil
+;;                        :type list
+;;                        :custom list
+;;                        :documentation "Keywords for overridable functions")
+;;    (sub-keywords :initarg :sub-keywords
+;;                  :initform nil
+;;                  :type list
+;;                  :custom list
+;;                  :documentation "Keywords which start subroutines")
+;;    (block-init-keywords :initarg :block-init-keywords
+;;                         :initform nil
+;;                         :type list
+;;                         :custom list
+;;                         :documentation "Keywords which start a block")
+;;    (block-continuation-keywords :initarg :block-continuation-keywords
+;;                                 :initform nil
+;;                                 :type list
+;;                                 :custom list
+;;                                 :documentation "Keywords which continue a block")
+;;    (named-block-keywords :initarg :named-block-keywords
+;;                          :initform nil
+;;                          :type list
+;;                          :custom list
+;;                          :documentation "Keywords which start \"special\" blocks")
+;;    (special-sub-keywords :initarg :special-sub-keywords
+;;                          :initform nil
+;;                          :type list
+;;                          :custom list
+;;                          :documentation "Special names for subroutines")
+;;    (declaring-keywords :initarg :declaring-keywords
+;;                        :initform nil
+;;                        :type list
+;;                        :custom list
+;;                        :documentation "Keywords to declare variables")
+;;    (flow-control-keywords :initarg :declaring-keywords
+;;                           :initform nil
+;;                           :type list
+;;                           :custom list
+;;                           :documentation "Keywords to declare variables")
+;;    (nonoverridable-keywords :initarg :nonoverridable-keywords
+;;                             :initform nil
+;;                             :type list
+;;                             :custom list
+;;                             :documentation "Keywords which should not be overridden")
+;;    (before-label-keywords :initarg :before-label-keywords
+;;                           :initform nil
+;;                           :type list
+;;                           :custom list
+;;                           :documentation "Keywords whch may be followed by a label")
+;;    (after-label-keywords :initarg :after-label-keywords
+;;                          :initform nil
+;;                          :type list
+;;                          :custom list
+;;                          :documentation "Keywords which may be preceded by a label")))
+
+;; (defun cperl--add-list (kw-list kw-append)
+;;   "Add the list of keywords KW-LIST to KW-APPEND.
+;; Keywords occuring in both lists will only appear once
+;; in the result."
+;;   (dolist (kw kw-append) (add-to-list kw-list kw)))
+
+;; (cl-defmethod cperl--add-keywords ((kw-set cperl--keyword-set))
+;;   "Add KW-SET to the appropriate keyword lists.
+;; KW-SET is a `cperl--keyword-set' object.  From the lists
+;; `cperl-mode' builds regular expressions for syntax
+;; highlighting, intenting, and indexing."
+;;   (with-slots (namespace-keywords
+;;                functions-keywords
+;;                sub-keywords
+;;                block-init-keywords
+;;                block-continuation-keywords
+;;                named-block-keywords
+;;                special-sub-keywords
+;;                declaring-keywords
+;;                flow-control-keywords
+;;                nonoverridable-keywords
+;;                before-label-keywords
+;;                after-label-keywords)
+;;       kw-set
+;;     (cperl--add-list 'cperl-namespace-keywords namespace-keywords)
+;;     (cperl--add-list 'cperl-functions-keywords functions-keywords)
+;;     (cperl--add-list 'cperl-sub-keywords sub-keywords)
+;;     (cperl--add-list 'cperl-block-init-keywords block-init-keywords)
+;;     (cperl--add-list 'cperl-block-continuation-keywords block-continuation-keywords)
+;;     (cperl--add-list 'cperl-named-block-keywords named-block-keywords)
+;;     (cperl--add-list 'cperl-special-sub-keywords special-sub-keywords)
+;;     (cperl--add-list 'cperl-declaring-keywords declaring-keywords)
+;;     (cperl--add-list 'cperl-flow-control-keywords flow-control-keywords)
+;;     (cperl--add-list 'cperl-nonoverridable-keywords nonoverridable-keywords)
+;;     (cperl--add-list 'cperl-before-label-keywords before-label-keywords)
+;;     (cperl--add-list 'cperl-after-label-keywords after-label-keywords)))
 
 ;;; Moose keywords
 (defvar cperl-moose-nonoverridable-keywords
@@ -8835,28 +9019,34 @@ highlighting, intenting, and indexing."
     "predicate" "super" "traits" "with")
   "New keywords introduced by Moose, mostly good enough for Moo as well.")
 
-(defun cperl-moose-add-keywords ()
-  "Add moose keywords to the keyword list and re-compile
-the regular expressions used by `cperl-mode'."
-  (let ((keywords
-         (cperl--keyword-set
-          :nonoverridable-keywords cperl-moose-nonoverridable-keywords)))
-    (cperl--add-keywords keywords))
-  (cperl-collect-keyword-regexps)
-  (setq cperl-faces-init nil))
+(setq cperl-moose-keywords
+      (list ':functions cperl-moose-nonoverridable-keywords))
 
-;;; Plack keywords
-(defvar cperl-plack-nonoverridable-keywords
-  '("builder" "enable" "enable_if" "mount")
-  "Keywords defined by the DSL of Plack::Builder.")
-(defun cperl-plack-add-keywords ()
-  "Add plack keywords to the keyword list and re-compile
-the regular expressions used by cperl-mode."
-  (let ((keywords
-         (cperl--keyword-set
-          :nonoverridable-keywords cperl-plack-nonoverridable-keywords)))
-    (cperl--add-keywords keywords))
-  (cperl-collect-keyword-regexps))
+(cperl-add-keyword-set "^[\t ]*use[\t ]+Moo\\(se\\)?\\W"
+                       cperl-moose-keywords)
+
+(cperl-add-keyword-set "^[\t ]*use[\t ]+MooseX::Declare\\W"
+                       (append '(:namespace-declare ("class" "role"))
+                               '(:namespace-use ("with" "extends"))
+                               '(:sub ("method" "multi method"
+                                       "before" "after" "around"
+                                       "override" "augment"))
+                               cperl-moose-keywords))
+ 
+;; (defun cperl-moose-add-keywords ()
+;;   "Add moose keywords to the keyword list and re-compile
+;; the regular expressions used by `cperl-mode'."
+;;   (let ((keywords
+;;          (cperl--keyword-set
+;;           :nonoverridable-keywords cperl-moose-nonoverridable-keywords)))
+;;     (cperl--add-keywords keywords))
+;;   (cperl-collect-keyword-regexps)
+;;   (setq cperl-faces-init nil))
+
+;;;; Specify a new keyword set: Plack::Builder
+(setq cperl-plack-builder-keywords '(:functions ("builder" "enable" "enable_if" "mount")))
+(cperl-add-keyword-set "^[\t ]*\\(use\\|require\\)[\t ]+Plack::Builder\\W"
+                       cperl-plack-builder-keywords)
 
 (provide 'cperl-mode)
 

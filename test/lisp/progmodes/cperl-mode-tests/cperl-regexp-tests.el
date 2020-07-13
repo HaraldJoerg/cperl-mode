@@ -1,4 +1,4 @@
-;;; cperl-fontification-tests.el --- Test fontification in cperl-mode -*- lexical-binding: t -*-
+;;; cperl-regexp-tests.el --- Test basic regular expressions in cperl-mode -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2020-2020 ...to be decided ...
 
@@ -10,37 +10,72 @@
 
 ;;; Commentary:
 
-;; This is a collection of Tests for the fontification of CPerl-mode.
-;; The primary target is to verify that the refactoring we're doing
-;; right now (May 2020 - ...) doesn't change any behavior, or does the
-;; right thing in cases where new fontification rules are enabled.
+;; This tests might soon be obsolete, but help verifying that the
+;; constants introduced during refactoring in 2020 actually match the
+;; same stuff as the original literals.
 
 ;; Run these tests interactively:
-;; (ert-run-tests-interactively '(tag :fontification))
+;; (ert-run-tests-interactively)
 
-;; Adapted from flymake
-(defvar cperl-mode-tests-data-directory
-  (expand-file-name "lisp/progmodes/cperl-mode-resources"
-                    (or (getenv "EMACS_TEST_DIRECTORY")
-                        (expand-file-name "../../../.."
-                                          (or load-file-name
-                                              buffer-file-name))))
-  "Directory containing cperl-mode test data.")
+(require 'cperl-mode)
+(ert-deftest cperl-test-basic-identifier ()
+  "Verify that basic identifiers are found.
+This is sort of a unit test for some of the regular expressions
+in cperl-mode."
+  (should (equal (string-match cperl--basic-identifier-regexp
+                               "3 + $foo+$bar")
+                 5))    ;; plain scalar
+  (should (equal (match-end 0) 8))  ;; "+" ends the identifier
+  
+  (should (equal (string-match cperl--basic-identifier-regexp
+                               "3 + $foo{ 'bar' }")
+                 5))    ;; braces also end the identifier
+  (should (equal (match-end 0) 8))
 
-(defun cperl-test-face (text regexp)
-  "Returns the face of the first character matched by REGEXP in TEXT."
-  (interactive)
-  (with-temp-buffer
-    (let ((cperl-hairy nil)
-      (cperl-font-lock nil)) ;; Does this matter?
-      (insert text)
-      (cperl-mode)
-      (font-lock-fontify-buffer)
-      (goto-char (point-min))
-      (re-search-forward regexp)
-      (get-text-property (match-beginning 0) 'face))))
+  (should (equal (string-match cperl--basic-identifier-regexp
+                               "3 + $Foo::bar+1")
+                 5))    ;; an identifier with package spec
+  (should (equal (match-end 0) 8))
 
-(ert-deftest jrockway-issue-45 ()
+  (should (equal (string-match cperl--identifier-regexp
+                               "3 + $Foo::bar*3")
+                 5))    ;; an identifier with package spec
+  (should (equal (match-end 0) 13))
+
+  (should (equal (string-match cperl--identifier-regexp
+                               "3 + $___::___*3")
+                 5))    ;; yes, underscore is fine
+  (should (equal (match-end 0) 13))
+
+  (should (equal (string-match cperl--version-regexp
+                               " v1.2.3 ")
+                 1))    ;; "structured" version
+
+  (should (equal (string-match (concat "^\\("
+                                       cperl--version-regexp
+                                       "\\)$")
+                               " v1.2 ") 
+                 nil))  ;; no match, needs at least three digits
+
+  (should (equal (string-match cperl--version-regexp
+                               " 42 ")
+                 1))
+
+  (should (equal (string-match cperl--version-regexp
+                               " 3.1415 ")
+                 1))
+
+  (should (equal (string-match cperl--version-regexp
+                               " 3. ")
+                 1))
+
+  (should (equal (string-match cperl--version-regexp
+                               " .1234 ")
+                 1))
+  )
+
+
+  
   "Verify that '/' is a division after ++ or --, not a regexp.
 Reported in https://github.com/jrockway/cperl-mode/issues/45.
 If seen as regular expression, then the slash is displayed using
