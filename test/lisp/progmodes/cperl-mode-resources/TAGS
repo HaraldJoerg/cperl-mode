@@ -1,17 +1,0 @@
-
-cperl-moose-module.pm,123
-package My::Moo::dule My::Moo::dule3,43
-    sub my_method My::Moo::dule::my_method24,451
-    sub my_method sub24,451
-
-cperl-here-docs-indented.pl,0
-
-cperl-indexing.pm,62
-package Pack::Age;Pack::Age1,0
-sub foo Pack::Age::foo3,20
-
-cperl-here-docs-edge.pl,0
-Unreadable file /home/haj/devel/emacs-lisp/cperl-mode/test/lisp/progmodes/cperl-mode-resources/.#cperl-moosex-declare.pm
-cperl-here-docs.pl,0
-
-cperl-moosex-declare.pm,0
