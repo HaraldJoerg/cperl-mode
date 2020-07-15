@@ -61,12 +61,35 @@ experimental and subject to change.
 **** New customization group: cperl-keyword-sets
 
 This group comes with one new option cperl-automatic-keyword-sets
-(default: nil).  If true, then cperl-mode applies heuristics which
+(default: t).  If true, then cperl-mode applies heuristics which
 barewords are "keywords" of some framework.  Currently this works for
-the keywords of Moo/Moose and Plack::Builder.
+the keywords of Moo/Moose, Plack::Builder, and MooseX::Declare.  The
+latter is a deprecated module, but an excellent playground to prepare
+for Cor.
 
 Both the heuristics to detect applicability and the mechanism to
 inject keyword sets are work in progress.
+
+Syntax highlighting and indexing for imenu/speedbar and TAGS
+generation recognize the new keywords, there are still some bugs
+to be fixed.  Known shortcomings are:
+
+ - TAGS generation: "mass" generation of TAGS files uses the active
+   keyword set from the source from where it was invoked.  This is
+   pretty hard to fix for cperl-etags, where the regular expressions
+   are sent to the external etags command for all files at once, and
+   probably even harder for cperl-write-tags.
+
+ - Tags generation: Subclasses in MooseX::Declare syntax (class Foo
+   extends Bar {...}) are not yet recognized by imenu.  The TAGS file,
+   however, recognizes them.
+
+ - Syntax highlighting: Highlighting of subroutine parameters of
+   MooseX::Declare methods is different from what Jonathan Rockwell
+   did in his mx-declare branch.
+
+New keyword sets can be added as a feature of cperl-mode, or in an
+init file as you wish.
 
 *** Indentation: Add PBP's recommendation as an indentation style
 
