@@ -1536,6 +1536,9 @@ The initial value contains the keywords from the Perl core."
 (defvar-local cperl--named-block-regexp        nil)
 (defvar-local cperl--special-sub-regexp        nil)
 
+(defvar-local cperl-imenu--function-name-regexp-perl nil)
+(defvar-local cperl-outline-regexp             nil)
+
 (defvar cperl--tags-namespace-declare-regexp   nil)
 (defvar cperl--tags-sub-regexp                 nil)
 
@@ -1572,8 +1575,7 @@ expressions which depend on these."
   ;; Details of groups in this are used in `cperl-imenu--create-perl-index'
   ;;  and `cperl-outline-level'.
   ;; Was: 2=sub|package; now 2=package-group, 5=package-name 8=sub-name (+3)
-  (set (make-local-variable
-        'cperl-imenu--function-name-regexp-perl)
+  (setq cperl-imenu--function-name-regexp-perl
         (concat
          "^\\("                               ; 1 = all
          "\\([ \t]*"                          ; 2 = package-group
@@ -1592,8 +1594,7 @@ expressions which depend on these."
          "\\)"))
 
   ;; outline setup
-  (set (make-local-variable
-        'cperl-outline-regexp)
+  (setq cperl-outline-regexp
         (concat cperl-imenu--function-name-regexp-perl "\\|" "\\`"))
 
   (set (make-local-variable 'outline-regexp) cperl-outline-regexp)
@@ -6649,7 +6650,7 @@ Will not move the position at the start to the left."
    "\\)")
   "A regexp for \"good, boring\" Perl version numbers.")
 
-(defun cperl--setup-etags-args (&optional add all)
+(defun cperl--setup-etags-args ()
   "Prepare the appropriate regular expressions for etags."
   `("-l" "none" "-r"
     ;; 1=fullname  2=package? 3=name 4=proto? 5=attrs? (VERY APPROX!)
