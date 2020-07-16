@@ -1419,6 +1419,10 @@ Unlike cperl-keywords-plist, this one is not buffer-local.  TAGS
 files contain entries from different sources which might have
 different keyword sets.")
 
+;; regexps used in TAGS files are global
+(defvar cperl--tags-namespace-declare-regexp   nil)
+(defvar cperl--tags-sub-regexp                 nil)
+
 (defun cperl-add-keyword-set (regexp keyword-set)
   "Define a new KEYWORD-SET to be applied if a buffer matches REGEXP.
 A keyword set is a property list matching keyword categories to
@@ -1531,9 +1535,6 @@ The initial value contains the keywords from the Perl core."
 
 (defvar-local cperl-imenu--function-name-regexp-perl nil)
 (defvar-local cperl-outline-regexp             nil)
-
-(defvar cperl--tags-namespace-declare-regexp   nil)
-(defvar cperl--tags-sub-regexp                 nil)
 
 (defun cperl-collect-keyword-regexps ()
   "Merge and collect buffer-local regexps.
@@ -8895,8 +8896,9 @@ do extra unwind via `cperl-unwind-to-safe'."
     "predicate" "super" "traits" "with")
   "New keywords introduced by Moose, mostly good enough for Moo as well.")
 
-(setq cperl-moose-keywords
-      (list ':functions cperl-moose-nonoverridable-keywords))
+(defvar cperl-moose-keywords
+  (list ':functions cperl-moose-nonoverridable-keywords)
+  "At the moment, we call all Moose keywords nonoverridable.")
 
 (cperl-add-keyword-set "^[\t ]*use[\t ]+Moo\\(se\\)?\\W"
                        cperl-moose-keywords)
@@ -8909,18 +8911,10 @@ do extra unwind via `cperl-unwind-to-safe'."
                                        "override" "augment"))
                                cperl-moose-keywords))
 
-;; (defun cperl-moose-add-keywords ()
-;;   "Add moose keywords to the keyword list and re-compile
-;; the regular expressions used by `cperl-mode'."
-;;   (let ((keywords
-;;          (cperl--keyword-set
-;;           :nonoverridable-keywords cperl-moose-nonoverridable-keywords)))
-;;     (cperl--add-keywords keywords))
-;;   (cperl-collect-keyword-regexps)
-;;   (setq cperl-faces-init nil))
-
 ;;;; Specify a new keyword set: Plack::Builder
-(setq cperl-plack-builder-keywords '(:functions ("builder" "enable" "enable_if" "mount")))
+(defvar cperl-plack-builder-keywords
+  '(:functions ("builder" "enable" "enable_if" "mount"))
+  "Plack::Builder exports three functions.")
 (cperl-add-keyword-set "^[\t ]*\\(use\\|require\\)[\t ]+Plack::Builder\\W"
                        cperl-plack-builder-keywords)
 
