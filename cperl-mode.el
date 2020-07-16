@@ -8979,6 +8979,10 @@ do extra unwind via `cperl-unwind-to-safe'."
 (cperl-add-keyword-set 'Plack::Builder
                        cperl-plack-builder-keywords)
 
+;;;; Specify a new keyword set: Function::Parameters
+(setq cperl-function-parameters-keywords-set
+      '(:sub ("fun" "method" "before" "after" "around" "augment" "override"))
+
 
 (provide 'cperl-mode)
 
