@@ -187,3 +187,31 @@ recognize variables and core keywords."
       (cperl-test--text-face "before"          nil)
       (cperl-test--text-face "withdraw"        nil)
       "done.")))
+
+(ert-deftest cperl-test-ancient-font-lock ()
+  "Verify that ancient bugs of font-lock are gone."
+  (let ((file (expand-file-name "ancient-font-lock-bugs.pl"
+                                 cperl-mode-tests-data-directory))
+        (case-fold-search nil))
+    (with-temp-buffer
+      (insert-file-contents file)
+      (goto-char (point-min))
+      (cperl-mode)
+      (font-lock-fontify-buffer)
+      (cperl-test--text-face "$string =~ /\\s" nil)          ;; get in place
+      (cperl-test--text-face "golden" font-lock-string-face) ;; ok here
+      (cperl-test--text-face "/" font-lock-constant-face)    ;; end of Perl RE
+      (cperl-test--text-face "$`" nil)                       ;; get in place
+      (cperl-test--text-face ";" nil)                        ;; not a string
+      (cperl-test--text-face "$'" nil)                       ;; get in place
+      (cperl-test--text-face ";" nil)                        ;; not a string
+      (cperl-test--text-face "$\"" font-lock-variable-name-face) ;; get in place
+      (cperl-test--text-face "=" nil)                        ;; not a string
+      (search-forward "my %opt = (")                         ;; get in place
+      (cperl-test--text-face "s" font-lock-string-face)      ;; hash key
+      (cperl-test--text-face " => " nil)                     ;; not a string
+      ;; Can't test for cperl-hash-face for "$opt{s}": that is a lexical
+      (cperl-test--text-face "}" nil)                        ;; not a string
+      (cperl-test--text-face ";" nil)                        ;; not a string
+      (cperl-test--text-face "//" nil)                       ;; not a string
+      (cperl-test--text-face ";" nil))))                     ;; not a string
