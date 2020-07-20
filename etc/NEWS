@@ -62,10 +62,21 @@ experimental and subject to change.
 
 This group comes with one new option cperl-automatic-keyword-sets
 (default: t).  If true, then cperl-mode applies heuristics which
-barewords are "keywords" of some framework.  Currently this works for
-the keywords of Moo/Moose, Plack::Builder, and MooseX::Declare.  The
-latter is a deprecated module, but an excellent playground to prepare
-for Cor.
+barewords are "keywords" of some framework.
+
+**** Applicability
+
+Currently this works for the keywords of the following modules:
+
+ - Moose, Moose::Role, Moo, Moo::Role: They bring a bunch of "keywords"
+   which technically are imported subs.
+
+ - MooseX::Declare: That module is deprecated, but an excellent
+   playground to prepare for Cor.
+
+ - Plack::Builder because the Author uses it
+
+ - Function::Parameters by popular request.
 
 Both the heuristics to detect applicability and the mechanism to
 inject keyword sets are work in progress.
@@ -90,6 +101,28 @@ to be fixed.  Known shortcomings are:
 
 New keyword sets can be added as a feature of cperl-mode, or in an
 init file as you wish.
+
+**** New commands
+
+If the automatic detection of applicable keywords fails, you can
+manually fix it with the following commands:
+
+ - cperl-activate-keyword-set (name): Prompt for NAME (with
+   completion) and activate the keyword from that set.
+
+   Example: The Perl module 'oose' behaves like Moose, but isn't
+   recognized.  If you want the Moose keywords recognized, run:
+
+       M-x cperl-activate-keyword-set <RET> Moose <RET>
+
+ - cperl-deactivate-keyword-set (name): Prompt for NAME (with
+   completion) and deactivate the keywords from that set.
+
+   Example: If you have 'use Moose' somewhere in your POD, then
+   cperl-mode will activate Moose keywords.  You can stop this with
+   the command:
+
+       M-x cperl-deactivate-keyword-set <RET> Moose <RET>
 
 *** Indentation: Add PBP's recommendation as an indentation style
 
