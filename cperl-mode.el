@@ -1295,7 +1295,7 @@ when it finds the modules which export them in the buffer's file."
   '("package" "bootstrap")
   "Keywords which introduce a namespace in Perl")
 
-(defvar cperl-core-namespace-use-keywords
+(defvar cperl-core-namespace-ref-keywords
   '("require" "use" "no")
   "Keywords which introduce a namespace in Perl")
 
@@ -1338,6 +1338,9 @@ when it finds the modules which export them in the buffer's file."
 (defvar cperl-core-sub-keywords
   '("sub")
   "Keywords starting a subroutine in Perl core")
+
+(defvar cperl-core-sub-ref-keywords nil
+  "Keywords referencing a subroutine in Perl core")
 
 (defvar cperl-core-block-init-keywords
   '("for" "foreach" "if" "unless" "until" "while")
@@ -1410,6 +1413,20 @@ Each element in this list is a two-element list consisting of a
 regular expression, and an extra keyword set to be applied if the
 regexp is found in the current buffer.")
 
+(defvar-local cperl-activated-keyword-sets nil
+  "A list of keyword sets which have been activated for the current buffer.")
+(put 'cperl-activated-keyword-sets 'permanent-local t)
+
+(defvar-local cperl-deactivated-keyword-sets nil
+  "A list of keyword sets which have been deactivated for the current buffer.")
+(put 'cperl-deactivated-keyword-sets 'permanent-local t)
+
+(defvar-local cperl-active-keyword-sets nil
+  "The list of keyword sets which is active in the current buffer")
+
+(defvar-local cperl-inactive-keyword-sets nil
+  "The list of keyword sets which isn't active in the current buffer")
+
 (defvar-local cperl-keywords-plist nil
   "The categorized list of Perl keywords.")
 
@@ -1423,7 +1440,7 @@ different keyword sets.")
 (defvar cperl--tags-namespace-declare-regexp   nil)
 (defvar cperl--tags-sub-regexp                 nil)
 
-(defun cperl-add-keyword-set (regexp keyword-set)
+(defun cperl-add-keyword-set (name keyword-set &optional regexp)
   "Define a new KEYWORD-SET to be applied if a buffer matches REGEXP.
 A keyword set is a property list matching keyword categories to
 lists of keywords.
@@ -1438,7 +1455,12 @@ which uses MooseX::Declare: \"class\" introduces a namespace,
 \"method\" is treated as starting a subroutine, and \"has\" and
 extends are shown like builtin functions."
   (add-to-list 'cperl-keyword-set-alist
-               (list regexp keyword-set))
+               (list name
+                     (or regexp
+                         (concat "^[\t ]*use[\t *]+"
+                                 (symbol-name name)
+                                 "\\W"))
+                     keyword-set))
   (cperl-add-keywords cperl-tags-keywords-plist keyword-set)
   (setq cperl--tags-namespace-declare-regexp
         (regexp-opt (cperl-tags-keywords ':namespace-declare))
@@ -1478,22 +1500,56 @@ keyword lists."
   (save-excursion
     (dolist (set cperl-keyword-set-alist)
       (goto-char (point-min))
-      (let ((regexp (car set))
-            (keyword-set (cdr set)))
-        (when (re-search-forward regexp nil t)
-          (apply 'cperl-add-keywords cperl-keywords-plist keyword-set))))))
+      (let ((name (car set))
+            (regexp (nth 1 set))
+            (keyword-set (nthcdr 2 set)))
+        (if (or (memq name cperl-activated-keyword-sets)
+                  (and (null (memq name cperl-deactivated-keyword-sets))
+		       cperl-automatic-keyword-sets
+                       (re-search-forward regexp nil t)))
+            (progn
+              (apply 'cperl-add-keywords cperl-keywords-plist keyword-set)
+              (cl-pushnew name cperl-active-keyword-sets))
+          (cl-pushnew name cperl-inactive-keyword-sets))))))
 
+(defun cperl-deactivate-keyword-set (name)
+  "Disable handling of keywords for keyword set NAME."
+  (interactive (list (intern-soft (completing-read "Deactivate keyword set: "
+                                      cperl-active-keyword-sets))))
+  (setq cperl-activated-keyword-sets
+	(delq name cperl-activated-keyword-sets))
+  (setq cperl-deactivated-keyword-sets
+	(cl-pushnew name cperl-deactivated-keyword-sets))
+  (cperl-mode))
+
+(defun cperl-activate-keyword-set (name)
+  "Enable handling of keywords for keyword set NAME."
+  (interactive (list (intern-soft (completing-read "Acactivate keyword set: "
+                                      cperl-inactive-keyword-sets))))
+  (setq cperl-deactivated-keyword-sets
+	(delq name cperl-deactivated-keyword-sets))
+  (setq cperl-activated-keyword-sets
+	(cl-pushnew name cperl-activated-keyword-sets))
+  (cperl-mode))
+
+(defun cperl-reset-keyword-sets ()
+  "Clear lists of explicitly activated and deactivated keyword sets"
+  (interactive)
+  (setq cperl-activated-keyword-sets nil)
+  (setq cperl-deactivated-keyword-sets nil)
+  (cperl-mode))
 
 (defun cperl--initialize-keywords-plist ()
   "Inititialize the buffer-local plist of keywords.
 The initial value contains the keywords from the Perl core."
   (setq cperl-keywords-plist
         (list ':namespace-declare  cperl-core-namespace-declare-keywords
-              ':namespace-use      cperl-core-namespace-use-keywords
+              ':namespace-ref      cperl-core-namespace-ref-keywords
               ':functions          cperl-core-functions-for-font-lock
               ':flow-control       cperl-core-flow-control-keywords
               ':nonoverridable     cperl-core-nonoverridable-keywords
               ':sub                cperl-core-sub-keywords
+              ':sub-ref            cperl-core-sub-ref-keywords
               ':after-label        cperl-core-after-label-keywords
               ':before-label       cperl-core-before-label-keywords
               ':declaring          cperl-core-declaring-keywords
@@ -1518,12 +1574,13 @@ The initial value contains the keywords from the Perl core."
 
 
 (defvar-local cperl--namespace-declare-regexp  nil)
-(defvar-local cperl--namespace-use-regexp      nil)
+(defvar-local cperl--namespace-ref-regexp      nil)
 (defvar-local cperl--namespace-regexp          nil)
 (defvar-local cperl--functions-regexp          nil)
 (defvar-local cperl--flow-control-regexp       nil)
 (defvar-local cperl--nonoverridable-regexp     nil)
 (defvar-local cperl--sub-regexp                nil)
+(defvar-local cperl--sub-ref-regexp            nil)
 (defvar-local cperl--after-label-regexp        nil)
 (defvar-local cperl--before-label-regexp       nil)
 (defvar-local cperl--declaring-regexp          nil)
@@ -1542,20 +1599,20 @@ Merge all keyword lists to optimized regular expressions which
 will actually be used by `cperl-mode'. Then construct regular
 expressions which depend on these."
   (cperl--initialize-keywords-plist)
-  (when cperl-automatic-keyword-sets
-    (cperl-apply-keyword-sets))
+  (cperl-apply-keyword-sets)
   (setq cperl--namespace-declare-regexp      (regexp-opt (cperl-keywords ':namespace-declare))
-        cperl--namespace-use-regexp          (regexp-opt (cperl-keywords ':namespace-use))
+        cperl--namespace-ref-regexp          (regexp-opt (cperl-keywords ':namespace-ref))
         cperl--namespace-regexp              (regexp-opt (append (cperl-keywords ':namespace-declare)
-                                                                 (cperl-keywords ':namespace-use)))
+                                                                 (cperl-keywords ':namespace-ref)))
         cperl--functions-regexp              (regexp-opt (cperl-keywords ':functions))
         cperl--flow-control-regexp           (regexp-opt (append (cperl-keywords ':flow-control)
                                                                  (cperl-keywords ':sub)
                                                                  (cperl-keywords ':namespace-declare)
-                                                                 (cperl-keywords ':namespace-use)
+                                                                 (cperl-keywords ':namespace-ref)
                                                                  (cperl-keywords ':declaring)))
         cperl--nonoverridable-regexp         (regexp-opt (cperl-keywords ':nonoverridable))
         cperl--sub-regexp                    (regexp-opt (cperl-keywords ':sub))
+        cperl--sub-ref-regexp                (regexp-opt (cperl-keywords ':sub-ref))
         cperl--after-label-regexp            (regexp-opt (cperl-keywords ':after-label))
         cperl--before-label-regexp           (regexp-opt (cperl-keywords ':before-label))
         cperl--declaring-regexp              (regexp-opt (cperl-keywords ':declaring))
@@ -6664,7 +6721,7 @@ Will not move the position at the start to the left."
              "\\(?:[ \\t]+" cperl--version-regexp   ;; package NAME VERSION
              "\\)?"                                 ;; ...is optional
              "\\(?:[ \\t]+"                         ;;
-             cperl--namespace-use-regexp            ;; extends and similar stuff
+             cperl--namespace-ref-regexp            ;; extends and similar stuff
              "[ \\t]+" cperl--identifier-regexp     ;; followed by another package
              "\\)*"                                 ;; FIXME: Is there a comma?
              "[ \\t]*\\(?:[#;{]\\|$\\)"             ;; and some closing thingy
@@ -6907,7 +6964,9 @@ Does not move point."
                         (number-to-string (1- (elt elt 1))) ; Char pos 0-based
                         "\n")
                 (if (and (string-match "^[_a-zA-Z]+::" (car elt))
-                         (string-match (concat "^" cperl--sub-regexp "[ \t]+\\([_a-zA-Z]+\\)[^:_a-zA-Z]")
+                         (string-match (concat "^[\t ]*"
+                                               cperl--sub-regexp
+                                               "[ \t]+\\([_a-zA-Z]+\\)[^:_a-zA-Z]")
                                        (elt elt 3)))
                     ;; Need to insert the name without package as well
                     (setq lst (cons (cons (substring (elt elt 3)
@@ -8900,23 +8959,26 @@ do extra unwind via `cperl-unwind-to-safe'."
   (list ':functions cperl-moose-nonoverridable-keywords)
   "At the moment, we call all Moose keywords nonoverridable.")
 
-(cperl-add-keyword-set "^[\t ]*use[\t ]+Moo\\(se\\)?\\W"
-                       cperl-moose-keywords)
+(cperl-add-keyword-set 'Moose       cperl-moose-keywords)
+(cperl-add-keyword-set 'Moo         cperl-moose-keywords)
+(cperl-add-keyword-set 'Moose::Role cperl-moose-keywords)
+(cperl-add-keyword-set 'Moo::Role   cperl-moose-keywords)
 
-(cperl-add-keyword-set "^[\t ]*use[\t ]+MooseX::Declare\\W"
+(cperl-add-keyword-set 'MooseX::Declare
                        (append '(:namespace-declare ("class" "role"))
-                               '(:namespace-use ("with" "extends"))
-                               '(:sub ("method" "multi method"
-                                       "before" "after" "around"
-                                       "override" "augment"))
-                               cperl-moose-keywords))
+                               '(:namespace-ref ("with" "extends"))
+                               '(:sub ("method" "multi method"))
+                               '(:sub-ref ("before" "after" "around"
+                                           "override" "augment"))
+                       cperl-moose-keywords))
 
 ;;;; Specify a new keyword set: Plack::Builder
 (defvar cperl-plack-builder-keywords
   '(:functions ("builder" "enable" "enable_if" "mount"))
   "Plack::Builder exports three functions.")
-(cperl-add-keyword-set "^[\t ]*\\(use\\|require\\)[\t ]+Plack::Builder\\W"
+(cperl-add-keyword-set 'Plack::Builder
                        cperl-plack-builder-keywords)
+
 
 (provide 'cperl-mode)
 
