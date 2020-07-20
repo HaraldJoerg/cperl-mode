@@ -8981,8 +8981,11 @@ do extra unwind via `cperl-unwind-to-safe'."
 
 ;;;; Specify a new keyword set: Function::Parameters
 (defvar cperl-function-parameters-keywords-set
-  '(:sub ("fun" "method" "before" "after" "around" "augment" "override"))
+  '(:sub ("fun" "method")
+         :sub-ref ("before" "after" "around" "augment" "override"))
   "Declare keywords for Function::Parameters.")
+(cperl-add-keyword-set 'Function::Parameters
+                       cperl-function-parameters-keywords-set)
 
 (provide 'cperl-mode)
 

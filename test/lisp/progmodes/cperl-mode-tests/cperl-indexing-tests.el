@@ -99,3 +99,20 @@ Check that such packages are indexed correctly."
     (delete-file "TAGS")
     (kill-buffer)))
 
+(ert-deftest cperl-function-parameters ()
+  "Play around with the keywords of Function::Parameters"
+  (let ((file (expand-file-name "function-parameters.pm"
+                                cperl-mode-tests-data-directory))
+        (cperl-automatic-keyword-sets t))
+    (find-file file)
+    (cperl-mode)
+    (cperl-imenu--create-perl-index)
+    (let* ((index-alist (cperl-imenu--create-perl-index))
+           (packages-alist (assoc "+Packages+..." index-alist))
+           (unsorted-alist (assoc "+Unsorted List+..." index-alist))
+           )
+      (should (markerp (cdr (assoc "Main::foo" unsorted-alist)))) ;; a "fun"ction
+      (should (markerp (cdr (assoc "Main::bar" unsorted-alist)))) ;; a method
+      (should (markerp (cdr (assoc "package Main" packages-alist))))
+      (should (markerp (cdr (assoc "package Derived" packages-alist)))))))
+
