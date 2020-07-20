@@ -154,8 +154,8 @@ Full compatibility with jrockway's branch is not attempted."
       (cperl-test--text-face "CheckingAccount" font-lock-function-name-face)
       (cperl-test--text-face "extends"         font-lock-keyword-face)
       (cperl-test--text-face "BankAccount"     font-lock-function-name-face)
-      (cperl-test--text-face "before"          font-lock-keyword-face)
-      (cperl-test--text-face "withdraw"        font-lock-function-name-face)
+      (cperl-test--text-face "before"          font-lock-type-face)
+      (cperl-test--text-face "withdraw"        nil)
       "done.")))
 
 (ert-deftest cperl-test-moosex-declare-noauto ()
@@ -215,3 +215,25 @@ recognize variables and core keywords."
       (cperl-test--text-face ";" nil)                        ;; not a string
       (cperl-test--text-face "//" nil)                       ;; not a string
       (cperl-test--text-face ";" nil))))                     ;; not a string
+
+(ert-deftest cperl-test-set-activation ()
+  "Verify that explicit activation / deactivation of keywords works."
+  (let ((file (expand-file-name "cperl-moose-module.pm"
+                                cperl-mode-tests-data-directory))
+        (cperl-automatic-keyword-sets t)
+        (case-fold-search nil))
+    (with-temp-buffer
+      (insert-file-contents file)
+      (goto-char (point-min))
+      (cperl-mode)
+      (font-lock-fontify-buffer)
+      (cperl-test--text-face "builder"         font-lock-type-face)
+      (cperl-deactivate-keyword-set 'Plack::Builder)
+      (goto-char (point-min))
+      (font-lock-fontify-buffer)
+      (cperl-test--text-face "builder"         nil)
+      (cperl-activate-keyword-set 'Plack::Builder)
+      (goto-char (point-min))
+      (font-lock-fontify-buffer)
+      (cperl-test--text-face "builder"         font-lock-type-face)
+      "done.")))
