@@ -3,8 +3,9 @@
 ;; Copyright (C) 1985-1987, 1991-2020 Free Software Foundation, Inc.
 
 ;; Author: Ilya Zakharevich
-;;      Bob Olson
-;;      Jonathan Rockway <jon@jrock.us>
+;;         Bob Olson
+;;         Jonathan Rockway <jon@jrock.us>
+;;         Harald Jörg <haj@posteo.de>
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: languages, Perl
 
@@ -881,7 +882,7 @@ B) Speed of editing operations.
                                 literal parts and the terminator of formats
                                 and whatever is syntactically considered
                                 as string literals
-  `font-lock-type-face'                 Overridable keywords
+  `font-lock-type-face'         Overridable keywords
   `font-lock-variable-name-face' Variable declarations, indirect array and
                                 hash names, POD headers/item names
   `cperl-invalid-face'          Trailing whitespace
@@ -902,7 +903,7 @@ In regular expressions (including character classes):
                                 we couldn't match, misplaced quantifiers,
                                 unrecognized escape sequences
   `cperl-nonoverridable-face'   Modifiers, as gism in m/REx/gism
-  `font-lock-type-face'                 escape sequences with arguments (\\x \\23 \\p \\N)
+  `font-lock-type-face'         escape sequences with arguments (\\x \\23 \\p \\N)
                                 and others match-a-char escape sequences
   `font-lock-keyword-face'      Capturing parens, and |
   `font-lock-function-name-face' Special symbols: $ ^ . [ ] [^ ] (?{ }) (??{ })
@@ -4518,12 +4519,12 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
                            (1- e) e 'face my-cperl-delimiters-face)))
                     (if (and is-REx cperl-regexp-scan)
                         ;; Process RExen: embedded comments, charclasses and ]
-;;;/\3333\xFg\x{FFF}a\ppp\PPP\qqq\C\99f(?{  foo  })(??{  foo  })/;
-;;;/a\.b[^a[:ff:]b]x$ab->$[|$,$ab->[cd]->[ef]|$ab[xy].|^${a,b}{c,d}/;
-;;;/(?<=foo)(?<!bar)(x)(?:$ab|\$\/)$|\\\b\x888\776\[\:$/xxx;
-;;;m?(\?\?{b,a})? + m/(??{aa})(?(?=xx)aa|bb)(?#aac)/;
-;;;m$(^ab[c]\$)$ + m+(^ab[c]\$\+)+ + m](^ab[c\]$|.+)] + m)(^ab[c]$|.+\));
-;;;m^a[\^b]c^ + m.a[^b]\.c.;
+                        ;; /\3333\xFg\x{FFF}a\ppp\PPP\qqq\C\99f(?{  foo  })(??{  foo  })/;
+                        ;; /a\.b[^a[:ff:]b]x$ab->$[|$,$ab->[cd]->[ef]|$ab[xy].|^${a,b}{c,d}/;
+                        ;; /(?<=foo)(?<!bar)(x)(?:$ab|\$\/)$|\\\b\x888\776\[\:$/xxx;
+                        ;; m?(\?\?{b,a})? + m/(??{aa})(?(?=xx)aa|bb)(?#aac)/;
+                        ;; m$(^ab[c]\$)$ + m+(^ab[c]\$\+)+ + m](^ab[c\]$|.+)] + m)(^ab[c]$|.+\));
+                        ;; m^a[\^b]c^ + m.a[^b]\.c.;
                         (save-excursion
                           (goto-char (1+ b))
                           ;; First
@@ -4539,9 +4540,9 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
                                        "\\((\\?\\\\#\\)\\(\\)"
                                      "\\((\\?#\\)\\(\\)"))
                                  "\\|"
-                                    "\\(\\[\\)" ; 3=[
+                                 "\\(\\[\\)" ; 3=[
                                  "\\|"
-                                    "\\(]\\)" ; 4=]
+                                 "\\(]\\)" ; 4=]
                                  "\\|"
                                  ;; XXXX Will not be able to use it in s)))
                                  (if (eq (char-after b) ?\) )
@@ -4551,42 +4552,42 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
                                        "\\((\\\\\\?\\\\\\?{\\|()\\\\\\?{\\)"
                                      "\\((\\?\\??{\\)")) ; 5= (??{ (?{
                                  "\\|"  ; 6= 0-length, 7: name, 8,9:code, 10:group
-                                    "\\(" ;; XXXX 1-char variables, exc. |()\s
-                                       "[$@]"
-                                       "\\("
-                                          "[_a-zA-Z:][_a-zA-Z0-9:]*"
-                                       "\\|"
-                                          "{[^{}]*}" ; only one-level allowed
-                                       "\\|"
-                                          "[^{(|) \t\r\n\f]"
-                                       "\\)"
-                                       "\\(" ;;8,9:code part of array/hash elt
-                                          "\\(" "->" "\\)?"
-                                          "\\[[^][]*\\]"
-                                          "\\|"
-                                          "{[^{}]*}"
-                                       "\\)*"
-                                    ;; XXXX: what if u is delim?
-                                    "\\|"
-                                       "[)^|$.*?+]"
-                                    "\\|"
-                                       "{[0-9]+}"
-                                    "\\|"
-                                       "{[0-9]+,[0-9]*}"
-                                    "\\|"
-                                       "\\\\[luLUEQbBAzZG]"
-                                    "\\|"
-                                       "(" ; Group opener
-                                       "\\(" ; 10 group opener follower
-                                          "\\?\\((\\?\\)" ; 11: in (?(?=C)A|B)
-                                       "\\|"
-                                          "\\?[:=!>?{]"         ; "?" something
-                                       "\\|"
-                                          "\\?[-imsx]+[:)]" ; (?i) (?-s:.)
-                                       "\\|"
-                                          "\\?([0-9]+)"         ; (?(1)foo|bar)
-                                       "\\|"
-                                          "\\?<[=!]"
+                                 "\\(" ;; XXXX 1-char variables, exc. |()\s
+                                 "[$@]"
+                                 "\\("
+                                 "[_a-zA-Z:][_a-zA-Z0-9:]*"
+                                 "\\|"
+                                 "{[^{}]*}" ; only one-level allowed
+                                 "\\|"
+                                 "[^{(|) \t\r\n\f]"
+                                 "\\)"
+                                 "\\(" ;;8,9:code part of array/hash elt
+                                 "\\(" "->" "\\)?"
+                                 "\\[[^][]*\\]"
+                                 "\\|"
+                                 "{[^{}]*}"
+                                 "\\)*"
+                                 ;; XXXX: what if u is delim?
+                                 "\\|"
+                                 "[)^|$.*?+]"
+                                 "\\|"
+                                 "{[0-9]+}"
+                                 "\\|"
+                                 "{[0-9]+,[0-9]*}"
+                                 "\\|"
+                                 "\\\\[luLUEQbBAzZG]"
+                                 "\\|"
+                                 "(" ; Group opener
+                                 "\\(" ; 10 group opener follower
+                                 "\\?\\((\\?\\)" ; 11: in (?(?=C)A|B)
+                                 "\\|"
+                                 "\\?[:=!>?{]"         ; "?" something
+                                 "\\|"
+                                 "\\?[-imsx]+[:)]" ; (?i) (?-s:.)
+                                 "\\|"
+                                 "\\?([0-9]+)"         ; (?(1)foo|bar)
+                                 "\\|"
+                                 "\\?<[=!]"
                                        ;;;"\\|"
                                        ;;;   "\\?"
                                        "\\)?"
@@ -6004,7 +6005,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
               (1 'cperl-hash-face)
               (2 font-lock-variable-name-face))
              ;;("\\([smy]\\|tr\\)\\([^a-z_A-Z0-9]\\)\\(\\([^\n\\]*||\\)\\)\\2")
-;;; Too much noise from \s* @s[ and friends
+             ;; Too much noise from \s* @s[ and friends
              ;;("\\(\\<\\([msy]\\|tr\\)[ \t]*\\([^ \t\na-zA-Z0-9_]\\)\\|\\(/\\)\\)"
              ;;(3 font-lock-function-name-face t t)
              ;;(4
