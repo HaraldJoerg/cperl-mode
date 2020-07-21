@@ -1502,13 +1502,13 @@ keyword lists."
       (goto-char (point-min))
       (let ((name (car set))
             (regexp (nth 1 set))
-            (keyword-set (nthcdr 2 set)))
+            (keyword-set (nth 2 set)))
         (if (or (memq name cperl-activated-keyword-sets)
                   (and (null (memq name cperl-deactivated-keyword-sets))
 		       cperl-automatic-keyword-sets
                        (re-search-forward regexp nil t)))
             (progn
-              (apply 'cperl-add-keywords cperl-keywords-plist keyword-set)
+              (cperl-add-keywords cperl-keywords-plist keyword-set)
               (cl-pushnew name cperl-active-keyword-sets))
           (cl-pushnew name cperl-inactive-keyword-sets))))))
 
