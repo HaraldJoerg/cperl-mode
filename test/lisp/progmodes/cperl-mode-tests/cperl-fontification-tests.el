@@ -164,7 +164,7 @@ This behaves as older versions of cperl-mode, and should still
 recognize variables and core keywords."
   (let ((file (expand-file-name "cperl-moosex-declare.pm"
                                 cperl-mode-tests-data-directory))
-        (cperl-automatic-keyword-sets nil) ;; Don't apply keyword sets
+        (cperl-automatic-keyword-sets nil) ; Don't apply keyword sets
         (case-fold-search nil))
     (with-temp-buffer
       (insert-file-contents file)
@@ -188,6 +188,26 @@ recognize variables and core keywords."
       (cperl-test--text-face "withdraw"        nil)
       "done.")))
 
+(ert-deftest cperl-test-test-more ()
+  "Test some keywords which occur in Test::More scripts."
+  (let ((file (expand-file-name "test-more.t"
+                                cperl-mode-tests-data-directory))
+        (cperl-automatic-keyword-sets t)
+        (case-fold-search nil))
+    (with-temp-buffer
+      (insert-file-contents file)
+      (goto-char (point-min))
+      (cperl-mode)
+      (font-lock-fontify-buffer)
+      (let ((functions '("require_ok(" "ok(" "is  (" "isnt("
+                         "diag(" "like  (" "unlike(" "cmp_ok("
+                         "is_deeply(" "skip "
+                         "can_ok(" "isa_ok("
+                         "pass(" "fail("
+                         "BAIL_OUT(" "done_testing;")))
+        (dolist (f functions)
+          (cperl-test--text-face f font-lock-type-face))))))
+
 (ert-deftest cperl-test-ancient-font-lock ()
   "Verify that ancient bugs of font-lock are gone."
   (let ((file (expand-file-name "ancient-font-lock-bugs.pl"
@@ -198,23 +218,23 @@ recognize variables and core keywords."
       (goto-char (point-min))
       (cperl-mode)
       (font-lock-fontify-buffer)
-      (cperl-test--text-face "$string =~ /\\s" nil)          ;; get in place
-      (cperl-test--text-face "golden" font-lock-string-face) ;; ok here
-      (cperl-test--text-face "/" font-lock-constant-face)    ;; end of Perl RE
-      (cperl-test--text-face "$`" nil)                       ;; get in place
-      (cperl-test--text-face ";" nil)                        ;; not a string
-      (cperl-test--text-face "$'" nil)                       ;; get in place
-      (cperl-test--text-face ";" nil)                        ;; not a string
-      (cperl-test--text-face "$\"" font-lock-variable-name-face) ;; get in place
-      (cperl-test--text-face "=" nil)                        ;; not a string
-      (search-forward "my %opt = (")                         ;; get in place
-      (cperl-test--text-face "s" font-lock-string-face)      ;; hash key
-      (cperl-test--text-face " => " nil)                     ;; not a string
+      (cperl-test--text-face "$string =~ /\\s" nil)          ; get in place
+      (cperl-test--text-face "golden" font-lock-string-face) ; ok here
+      (cperl-test--text-face "/" font-lock-constant-face)    ; end of Perl RE
+      (cperl-test--text-face "$`" nil)                       ; get in place
+      (cperl-test--text-face ";" nil)                        ; not a string
+      (cperl-test--text-face "$'" nil)                       ; get in place
+      (cperl-test--text-face ";" nil)                        ; not a string
+      (cperl-test--text-face "$\"" font-lock-variable-name-face) ; get in place
+      (cperl-test--text-face "=" nil)                        ; not a string
+      (search-forward "my %opt = (")                         ; get in place
+      (cperl-test--text-face "s" font-lock-string-face)      ; hash key
+      (cperl-test--text-face " => " nil)                     ; not a string
       ;; Can't test for cperl-hash-face for "$opt{s}": that is a lexical
-      (cperl-test--text-face "}" nil)                        ;; not a string
-      (cperl-test--text-face ";" nil)                        ;; not a string
-      (cperl-test--text-face "//" nil)                       ;; not a string
-      (cperl-test--text-face ";" nil))))                     ;; not a string
+      (cperl-test--text-face "}" nil)                        ; not a string
+      (cperl-test--text-face ";" nil)                        ; not a string
+      (cperl-test--text-face "//" nil)                       ; not a string
+      (cperl-test--text-face ";" nil))))                     ; not a string
 
 (ert-deftest cperl-test-set-activation ()
   "Verify that explicit activation / deactivation of keywords works."

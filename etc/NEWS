@@ -74,6 +74,9 @@ Currently this works for the keywords of the following modules:
  - MooseX::Declare: That module is deprecated, but an excellent
    playground to prepare for Cor.
 
+ - Test::More comes with the Perl core, highlighting the imports
+   makes counting test cases easier.
+
  - Plack::Builder because the Author uses it
 
  - Function::Parameters by popular request.

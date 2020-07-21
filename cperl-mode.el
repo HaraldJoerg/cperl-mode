@@ -8947,8 +8947,7 @@ do extra unwind via `cperl-unwind-to-safe'."
 ;; Here's a plan to make cperl-mode flexible enough.
 ;; The core of adding new keyword sets is the function add-keyword-set.
 
-
-;;; Moose keywords
+;;;; Specify a new keyword set: Moose
 (defvar cperl-moose-nonoverridable-keywords
   '("accessor" "after" "around" "augment"
     "before" "blessed" "clearer" "confess"
@@ -8965,6 +8964,7 @@ do extra unwind via `cperl-unwind-to-safe'."
 (cperl-add-keyword-set 'Moose::Role cperl-moose-keywords)
 (cperl-add-keyword-set 'Moo::Role   cperl-moose-keywords)
 
+;;;; Specify a new keyword set: MooseX::Declare
 (cperl-add-keyword-set 'MooseX::Declare
                        (append '(:namespace-declare ("class" "role"))
                                '(:namespace-ref ("with" "extends"))
@@ -8987,6 +8987,15 @@ do extra unwind via `cperl-unwind-to-safe'."
   "Declare keywords for Function::Parameters.")
 (cperl-add-keyword-set 'Function::Parameters
                        cperl-function-parameters-keywords-set)
+
+(defvar cperl-test-more-keywords-set
+  '(:functions ("can_ok" "cmp_ok" "diag" "done_testing" "explain" "fail"
+                "is" "is_deeply" "isa_ok" "isnt" "like" "new_ok" "note"
+                "ok" "pass" "plan" "require_ok" "skip" "subtest"
+                "todo_skip""unlike" "use_ok" "BAIL_OUT"))
+  "Functions imported by Test::More")
+(cperl-add-keyword-set 'Test::More
+                       cperl-test-more-keywords-set)
 
 (provide 'cperl-mode)
 
