@@ -51,6 +51,14 @@ Running any of the entries in the Perl/Tools/Tags menu
 failed with "cond: Buffer is read-only: #<buffer TAGS>".
 A workaround is in place.
 
+*** Builtin Docs: M-x cperl-perldoc now works on MS Windows.
+
+The "old" code relied on pod2man and the external man command,
+which isn't easily available on MS Windows.  Also, man and troff
+plus the required "dumb" terminal emulation are just ugly, so
+I decided to jettison that as well.  But that deserves an entry
+under "New Features".
+
 ** New Features
 
 *** Recognize keywords provided by frameworks (experimental)
@@ -133,6 +141,37 @@ In his book "Perl Best Practices", Damian Conway gives recommendations
 about indenting styles, and also provides the corresponding settings
 for Emacs.  These settings are now available as a new indenting style
 "PBP".
+
+*** Builtin documentation: Better POD reading in Emacs
+
+The old POD -> pod2man -> man -> plaintext approach was quite lossy,
+given that POD is rather expressive.  Direct conversions from POD to
+e.g. texinfo seems to be no longer available, so for the moment we
+have a different approach: POD -> pod2html -> Emacs shr (that's the
+"simple HTML renderer" which was imported from Gnus).  The shr
+renderer doesn't support fancy things like CSS and JavaScript, but the
+pod2html output doesn't need it anyway, so there's nothing lost.
+
+Instead of the old dependencies on pod2man and man we now have
+dependencies on pod2html and perldoc - but unlike man, these are
+readily available on all platforms.  Also, Emacs needs to be built
+with libxml2 support, but this seems to be the case in Linux
+distributions and for the MS Windows version.
+
+At the time of this writing, a lot of the builtin documentation is
+either outdated or just broken, so there's still work to do.
+
+**** New customization options: cperl-perldoc-program, cperl-pod2html-program
+
+In case the external programs perldoc and pod2html are not on your path,
+the actual locations can be customized.
+
+**** Improved command: cperl-perldoc
+
+The command now takes an optional second parameter for the section
+within a POD file.  This is used when a POD link element specifies a
+section either in the same, or in another POD file. (Yes, you can
+follow links with the new POD reader).
 
 ** Changes invisible to users
 
