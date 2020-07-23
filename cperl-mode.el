@@ -8494,15 +8494,132 @@ the appropriate statement modifier."
 
 (declare-function Man-getpage-in-background "man" (topic))
 
-;; By Anthony Foiani <afoiani@uswest.com>
-;; Getting help on modules in C-h f ?
-;; This is a modified version of `man'.
-;; Need to teach it how to lookup functions
+(defun cperl-perldoc-browse-url ()
+  "Browse the URL at point, using either perldoc or `browse-url'.
+If the URL at point starts with a \"perldoc\" schema, then run
+cperl-perldoc.  If it is a local fragment, find it. Otherwise,
+run browse-url."
+  (interactive)
+  (let ((url (get-text-property (point) 'shr-url)))
+    (when url
+      (cond
+       ((string-match (concat "^perldoc://"        ; our scheme
+                                "\\(?:\\(?1:.*\\)"   ; 1: page, may be empty
+                                "/\\(?2:.+\\)"       ; "/" + 2: nonzero anchor
+                                "\\|"                ; or
+                                "\\(?1:.+\\)\\)$")   ; 1: just a page
+                        url)
+          ;; link to be handled by cperl-perldoc
+        (let ((page   (match-string 1 url))
+              (anchor (match-string 2 url)))
+          (if (> (length page) 0)
+              (cperl-perldoc page anchor)
+            (when anchor
+              (goto-char (point-min))
+              (re-search-forward (concat "^\\s*" anchor "\\s*$") nil t)))))
+       ((string-match "^#\\(.+\\)" url)
+        ;; local anchor created by pod2html
+        (let* ((fragment (match-string 1 url))
+               (regexp   (replace-regexp-in-string "-" ".+" fragment)))
+          (goto-char (point-min))
+          (or (re-search-forward (concat "^ *" regexp) nil t)
+              (goto-char (point-min)))))
+       (t
+        (shr-browse-url))))))
+
+(defvar cperl-perldoc-shr-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [?\t] 'shr-next-link)
+    (define-key map [?\M-\t] 'shr-previous-link)
+    (define-key map [follow-link] 'mouse-face)
+    (define-key map [mouse-2] 'cperl-perldoc-browse-url)
+    (define-key map "\r" 'cperl-perldoc-browse-url)
+    (define-key map "q" 'bury-buffer)
+    (define-key map (kbd "SPC") 'scroll-up-command)
+    map)
+  "A keymap to allow following links in perldoc buffers."
+  )
+
+(defun cperl--pod-next-link ()
+  "Find the next link in a POD section, and process it.
+The L<...> syntax is the most complex markup in the POD family of
+strange things.  Also, quite a lot of modules on CPAN and
+elsewhere found ways to violate the spec in interesting ways
+which seem to work, at least, with some formatters."
+  (and (re-search-forward "L<\\(<+ \\)?" nil t)
+       (let* ((terminator-length (length (match-string 1)))
+              (extended (> terminator-length 0))
+              (terminator (if extended
+                              (concat " " (make-string terminator-length ?>))
+                            ">"))
+              ({  "\\(?:")
+              ({1 "\\(?1:")
+              ({2 "\\(?2:")
+              ({3 "\\(?3:")
+              (}  "\\)")
+              (or "\\|")
+              (plain     (concat { "[^|/<>]"                   }     ))
+              (extended  (concat { "[^|/]"                     }     ))
+              (nomarkup  (concat { "[^A-Z]<"                   }     ))
+              (markup    (concat { "[A-Z]<[^>|/]+>"            }     ))
+              (quoted    (concat { "\"" "[^\"]+" "\""          }     ))
+              (component (concat { plain or markup or nomarkup }     ))
+              (text  (if extended
+                         (concat {1 extended "+?" } )
+                       (concat {1 component "+" } )))
+              (name      (concat {2 "[^ \t|/<>]*"              }     ))
+              (url       (concat {2 "\\w+:/[^ |<>]+"           }     ))
+              (section (if extended
+                           (concat {3 quoted or extended "+?"  }     )
+                         (concat {3 quoted or component "+"    }     )))
+              (old-sect  (concat {2 "\\w[[:alnum:]-]+ [[:alnum:]- ]+"  } ))
+              (re        (concat "\\=" { text "|" } "?"
+                                 {
+                                 { name { "/" section } "?" }
+                                 or
+                                 url
+                                 or
+                                 old-sect
+                                 }
+                                 terminator))
+              (end-marker (make-marker)))
+         (re-search-forward re nil t)
+         (set-marker end-marker (match-end 0))
+         (cond
+          ((string= (match-string 2) "")
+           ;; L<Some text|/anchor> or L</anchor> -> don't touch
+           nil)
+          ((save-match-data
+             (string-match "^\\w+:/" (match-string 2)))
+           ;; L<https://www.perl.org/> -> don't touch
+           nil)
+          ((save-match-data
+             (string-match " " (match-string 2)))
+           ;; L<SEE ALSO> -> L<SEE ALSO|/"SEE ALSO">, fix old style section
+           (goto-char (match-end 2))
+           (insert "\"")
+           (goto-char (match-beginning 2))
+           (insert (concat (match-string 2) "|/\"")))
+          ((match-string 1)
+           ;; L<Some text|page/sect> -> L<Some text|perldoc://page/sect>
+           (goto-char (match-beginning 2))
+           (insert "perldoc://"))
+          ((match-string 3)
+           ;; L<page/section> -> L<page/section|perldoc://page/section>
+           (goto-char (match-beginning 2))
+           (insert (concat (match-string 2) "/" (match-string 3)
+                           "|" "perldoc://")))
+          (t
+           ;; L<page> -> L<page|perldoc://page>
+           (goto-char (match-beginning 2))
+           (insert (concat (match-string 2) "|" "perldoc://"))))
+         (goto-char (marker-position end-marker)))))
+
+
 ;;;###autoload
-(defun cperl-perldoc (word)
-  "Run `perldoc' on WORD."
-  (interactive
-   (list (let* ((default-entry (cperl-word-at-point))
+(defun cperl-perldoc (word &optional anchor)
+  "Run the shell command 'perldoc' on WORD, on Win32 platforms."
+  (interactive (list (let* ((default-entry (cperl-word-at-point))
                 (input (read-string
                         (format "perldoc entry%s: "
                                 (if (string= default-entry "")
@@ -8513,7 +8630,7 @@ the appropriate statement modifier."
                    (error "No perldoc args given")
                  default-entry)
              input))))
-  (require 'man)
+  (require 'shr)
   (let* ((case-fold-search nil)
          (is-func (and
                    (string-match "^\\(-[A-Za-z]\\|[a-z]+\\)$" word)
@@ -8521,9 +8638,47 @@ the appropriate statement modifier."
                                  (documentation-property
                                   'cperl-short-docs
                                   'variable-documentation))))
-         (Man-switches "")
-         (manual-program (if is-func "perldoc -f" "perldoc")))
-    (Man-getpage-in-background word)))
+         (perldoc-buffer (concat "*perldoc-"
+                                 (substring-no-properties word)
+                                 "*")))
+    (if (get-buffer perldoc-buffer)
+        (progn
+          (pop-to-buffer perldoc-buffer)
+          (goto-char (point-min))
+          (re-search-forward (concat "^ *" anchor "\\W") nil t))
+      (with-temp-buffer
+      ;; for diagnostics comment out the previous line, and uncomment the next
+      ; (with-current-buffer (get-buffer-create (concat "**pod-" word "**"))
+        ;; Fetch plain POD into a temporary buffer
+        (when (< 0 (if is-func
+                       (call-process cperl-perldoc-program nil t t "-u" "-f" word)
+                     (call-process cperl-perldoc-program nil t t "-u" word)))
+          (error (buffer-string)))
+        ;; Processing links can't be done by using <> as a bracket
+        ;; pair because link contents can contain unbalanced < or >
+        ;; symbols.  So do it the hard way....
+        (goto-char (point-min))
+        (while (cperl--pod-next-link))
+        (shell-command-on-region (point-min) (point-max)
+                                 (concat cperl-pod2html-program
+                                         " --cachedir="
+                                         (make-temp-file "cperl" t)
+                                         " --flush"
+                                         " --noindex"
+                                         " --quiet")
+                                 (current-buffer) nil "*perldoc error*")
+        (shr-render-buffer (current-buffer))) ; this pops to buffer "*html*"
+      (switch-to-buffer "*html*") ; just to be sure
+      (rename-buffer perldoc-buffer t)
+      (put-text-property (point-min) (point-max)
+                         'keymap cperl-perldoc-shr-map)
+      (set-buffer-modified-p nil)
+      (read-only-mode)
+      (when anchor
+        (goto-char (point-min))
+        (re-search-forward (concat "^ *" anchor "\\W") nil t))
+      )))
+
 
 ;;;###autoload
 (defun cperl-perldoc-at-point ()
@@ -8535,6 +8690,18 @@ the appropriate statement modifier."
   "File name for `pod2man'."
   :type 'file
   :group 'cperl)
+
+(defcustom cperl-perldoc-program "perldoc"
+  "Path to the shell command perldoc."
+  :type 'file
+  :group 'cperl
+  :version 28)
+
+(defcustom cperl-pod2html-program "pod2html"
+  "Path to the shell command pod2html."
+  :type 'file
+  :group 'cperl
+  :version 28)
 
 ;; By Nick Roberts <Nick.Roberts@src.bae.co.uk> (with changes)
 (defun cperl-pod-to-manpage ()
