@@ -87,6 +87,7 @@
          (defvar ,arg (quote ,arg) ,descr))))
 
 (defun cperl-choose-color (&rest list)
+  "Return the first color from LIST which is supported on the frame."
   (let (answer)
     (while list
       (or answer
@@ -260,7 +261,7 @@ This is regardless of where in the line point is when the TAB command is used."
   :group 'cperl-indentation-details)
 
 (defcustom cperl-font-lock nil
-  "Non-nil (and non-null) means CPerl buffers will use `font-lock-mode'.
+  "If non-nil (and non-null), CPerl buffers will use the command `font-lock-mode'.
 Can be overwritten by `cperl-hairy' if nil."
   :type '(choice (const null) boolean)
   :group 'cperl-affected-by-hairy)
@@ -8500,6 +8501,7 @@ If the URL at point starts with a \"perldoc\" schema, then run
 cperl-perldoc.  If it is a local fragment, find it. Otherwise,
 run browse-url."
   (interactive)
+  (require 'shr)
   (let ((url (get-text-property (point) 'shr-url)))
     (when url
       (cond
@@ -8537,8 +8539,7 @@ run browse-url."
     (define-key map "q" 'bury-buffer)
     (define-key map (kbd "SPC") 'scroll-up-command)
     map)
-  "A keymap to allow following links in perldoc buffers."
-  )
+  "A keymap to allow following links in perldoc buffers.")
 
 (defun cperl--pod-process-links ()
   "Find the next link in a POD section, and process it.
@@ -8591,8 +8592,7 @@ which seem to work, at least, with some formatters."
                                   url       ; can have text, but no section
                                 }
                                 or old-sect ; neither text nor section
-                                }
-                                ))
+                                }))
              (re        (concat link-re terminator))
              (end-marker (make-marker)))
         (re-search-forward re nil t)
@@ -8684,8 +8684,7 @@ which seem to work, at least, with some formatters."
       (read-only-mode)
       (when anchor
         (goto-char (point-min))
-        (re-search-forward (concat "^ *" anchor "\\W") nil t))
-      )))
+        (re-search-forward (concat "^ *" anchor "\\W") nil t)))))
 
 
 ;;;###autoload
