@@ -8540,80 +8540,92 @@ run browse-url."
   "A keymap to allow following links in perldoc buffers."
   )
 
-(defun cperl--pod-next-link ()
+(defun cperl--pod-process-links ()
   "Find the next link in a POD section, and process it.
 The L<...> syntax is the most complex markup in the POD family of
 strange things.  Also, quite a lot of modules on CPAN and
 elsewhere found ways to violate the spec in interesting ways
 which seem to work, at least, with some formatters."
-  (and (re-search-forward "L<\\(<+ \\)?" nil t)
-       (let* ((terminator-length (length (match-string 1)))
-              (extended (> terminator-length 0))
-              (terminator (if extended
-                              (concat " " (make-string terminator-length ?>))
-                            ">"))
-              ({  "\\(?:")
-              ({1 "\\(?1:")
-              ({2 "\\(?2:")
-              ({3 "\\(?3:")
-              (}  "\\)")
-              (or "\\|")
-              (plain     (concat { "[^|/<>]"                   }     ))
-              (extended  (concat { "[^|/]"                     }     ))
-              (nomarkup  (concat { "[^A-Z]<"                   }     ))
-              (markup    (concat { "[A-Z]<[^>|/]+>"            }     ))
-              (quoted    (concat { "\"" "[^\"]+" "\""          }     ))
-              (component (concat { plain or markup or nomarkup }     ))
-              (text  (if extended
-                         (concat {1 extended "+?" } )
-                       (concat {1 component "+" } )))
-              (name      (concat {2 "[^ \t|/<>]*"              }     ))
-              (url       (concat {2 "\\w+:/[^ |<>]+"           }     ))
-              (section (if extended
-                           (concat {3 quoted or extended "+?"  }     )
-                         (concat {3 quoted or component "+"    }     )))
-              (old-sect  (concat {2 "\\w[[:alnum:]-]+ [[:alnum:]- ]+"  } ))
-              (re        (concat "\\=" { text "|" } "?"
-                                 {
-                                 { name { "/" section } "?" }
-                                 or
-                                 url
-                                 or
-                                 old-sect
-                                 }
-                                 terminator))
-              (end-marker (make-marker)))
-         (re-search-forward re nil t)
-         (set-marker end-marker (match-end 0))
-         (cond
-          ((string= (match-string 2) "")
-           ;; L<Some text|/anchor> or L</anchor> -> don't touch
-           nil)
-          ((save-match-data
-             (string-match "^\\w+:/" (match-string 2)))
-           ;; L<https://www.perl.org/> -> don't touch
-           nil)
-          ((save-match-data
-             (string-match " " (match-string 2)))
-           ;; L<SEE ALSO> -> L<SEE ALSO|/"SEE ALSO">, fix old style section
-           (goto-char (match-end 2))
-           (insert "\"")
-           (goto-char (match-beginning 2))
-           (insert (concat (match-string 2) "|/\"")))
-          ((match-string 1)
-           ;; L<Some text|page/sect> -> L<Some text|perldoc://page/sect>
-           (goto-char (match-beginning 2))
-           (insert "perldoc://"))
-          ((match-string 3)
-           ;; L<page/section> -> L<page/section|perldoc://page/section>
-           (goto-char (match-beginning 2))
-           (insert (concat (match-string 2) "/" (match-string 3)
-                           "|" "perldoc://")))
-          (t
-           ;; L<page> -> L<page|perldoc://page>
-           (goto-char (match-beginning 2))
-           (insert (concat (match-string 2) "|" "perldoc://"))))
-         (goto-char (marker-position end-marker)))))
+  ;; Processing links can't be done by using <> as a bracket
+  ;; pair because link contents can contain unbalanced < or >
+  ;; symbols.  So do it the hard way....
+  (goto-char (point-min))
+  ;; Tired of backslasheritis?  Well, I am.
+  (let* (({  "\\(?:")
+         ({1 "\\(?1:")
+         ({2 "\\(?2:")
+         ({3 "\\(?3:")
+         (}  "\\)")
+         (or "\\|")
+         (plain     (concat { "[^|/<>]"                   }     ))
+         (extended  (concat { "[^|/]"                     }     ))
+         (nomarkup  (concat { "[^A-Z]<"                   }     ))
+         (markup    (concat { "[A-Z]<"
+                            { "[A-Z]<[^>|/]+>" or "[^|/>]" } "+"
+                            ">"                           }     ))
+         (quoted    (concat { "\"" "[^\"]+" "\""          }     ))
+         (component (concat { plain or markup or nomarkup }     ))
+         (name      (concat {2 "[^ \t|/<>]*"              }     ))
+         (url       (concat {2 "\\w+:/[^ |<>]+"           }     ))
+         ;; old-style references to a section in the same page.
+         ;; This style is deprecated, but found in the wild.  We are
+         ;; following the recommended heuristic from perlpodspec:
+         ;;    .... if it contains any whitespace, it's a section.
+         (old-sect  (concat {2 component "+ " component "+" } )))
+    (while (re-search-forward "L<\\(<+ \\)?" nil t)
+      (let* ((terminator-length (length (match-string 1)))
+             (allow-angle (> terminator-length 0))
+             (text  (if allow-angle
+                        (concat {1 extended "+?" } )
+                      (concat {1 component "+?" } )))
+             (section (if allow-angle
+                          (concat {3 quoted or extended "+?" } )
+                        (concat {3 quoted or component "+" } )))
+             (terminator (if allow-angle
+                             (concat " " (make-string terminator-length ?>))
+                           ">"))
+             (link-re   (concat "\\="
+                                { { text "|" } "?"
+                                  { { name { "/" section } "?" }
+                                  or
+                                  url       ; can have text, but no section
+                                }
+                                or old-sect ; neither text nor section
+                                }
+                                ))
+             (re        (concat link-re terminator))
+             (end-marker (make-marker)))
+        (re-search-forward re nil t)
+        (set-marker end-marker (match-end 0))
+        (cond
+         ((string= (match-string 2) "")
+          ;; L<Some text|/anchor> or L</anchor> -> don't touch
+          nil)
+         ((save-match-data
+            (string-match "^\\w+:/" (match-string 2)))
+          ;; L<https://www.perl.org/> -> don't touch
+          nil)
+         ((save-match-data
+            (string-match " " (match-string 2)))
+          ;; L<SEE ALSO> -> L<SEE ALSO|/"SEE ALSO">, fix old style section
+          (goto-char (match-end 2))
+          (insert "\"")
+          (goto-char (match-beginning 2))
+          (insert (concat (match-string 2) "|/\"")))
+         ((match-string 1)
+          ;; L<Some text|page/sect> -> L<Some text|perldoc://page/sect>
+          (goto-char (match-beginning 2))
+          (insert "perldoc://"))
+         ((match-string 3)
+          ;; L<page/section> -> L<page/section|perldoc://page/section>
+          (goto-char (match-beginning 2))
+          (insert (concat (match-string 2) "/" (match-string 3)
+                          "|" "perldoc://")))
+         (t
+          ;; L<page> -> L<page|perldoc://page>
+          (goto-char (match-beginning 2))
+          (insert (concat (match-string 2) "|" "perldoc://"))))
+        (goto-char (marker-position end-marker))))))
 
 
 ;;;###autoload
@@ -8654,11 +8666,7 @@ which seem to work, at least, with some formatters."
                        (call-process cperl-perldoc-program nil t t "-u" "-f" word)
                      (call-process cperl-perldoc-program nil t t "-u" word)))
           (error (buffer-string)))
-        ;; Processing links can't be done by using <> as a bracket
-        ;; pair because link contents can contain unbalanced < or >
-        ;; symbols.  So do it the hard way....
-        (goto-char (point-min))
-        (while (cperl--pod-next-link))
+        (cperl--pod-process-links)
         (shell-command-on-region (point-min) (point-max)
                                  (concat cperl-pod2html-program
                                          " --cachedir="

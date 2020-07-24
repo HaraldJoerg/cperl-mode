@@ -15,10 +15,10 @@
 ;; same stuff as the original literals.
 
 ;; Run these tests interactively:
-;; (ert-run-tests-interactively)
+;; (ert-run-tests-interactively t)
 
 (require 'cperl-mode)
-(ert-deftest cperl-test-basic-identifier ()
+(ert-deftest cperl-test-basic-identifier-regexp ()
   "Verify that basic identifiers are found.
 This is sort of a unit test for some of the regular expressions
 in cperl-mode."
@@ -54,7 +54,7 @@ in cperl-mode."
   (should (equal (string-match (concat "^\\("
                                        cperl--version-regexp
                                        "\\)$")
-                               " v1.2 ") 
+                               " v1.2 ")
                  nil))  ;; no match, needs at least three digits
 
   (should (equal (string-match cperl--version-regexp
@@ -73,3 +73,74 @@ in cperl-mode."
                                " .1234 ")
                  1))
   )
+
+
+(defun cperl-test-wrap-podlink-process (text expected)
+  "Process TEXT with `cperl--pod-process-links', check against EXPECTED.
+This is a helper for `cperl-test-podlink-process' to reduce
+boilerplate.  In case of unexpected results, the contents of the
+buffer and the expected result are printed to the message buffer,
+making it easy to identify which of the individual tests failed.
+Also makes sure that a link immediately following TEXT is
+processed (no runaway regex)."
+  (with-temp-buffer
+    (insert "prologue\n")
+    (insert text)
+    (insert "L<end>")
+    (cperl--pod-process-links)
+    (goto-char (point-min))
+    (let ((found (search-forward expected nil t)))
+      (or found
+          (message "After processing:\n%s\nExpected\n%s" (buffer-string) expected))
+      (should found)
+      (should (search-forward "L<end|perldoc://end>" nil t))))) ; no gap
+
+(ert-deftest cperl-test-podlink-process ()
+  "Verify that POD L<...> constructs are properly processed."
+  ;; In Encode::Supported: Old-style section
+  (cperl-test-wrap-podlink-process
+   "L<Microsoft-related naming mess>"
+   "L<Microsoft-related naming mess|/\"Microsoft-related naming mess\">")
+  ;; In perldiag: Unbalanced < in old-style section"
+  (cperl-test-wrap-podlink-process
+   "L<(?<=pattern) and \\K in perlre|perlre/\\K>"
+   "L<(?<=pattern) and \\K in perlre|perldoc://perlre/\\K>")
+  ;; In perldiag: Messy quotes in section
+  (cperl-test-wrap-podlink-process
+   "L</\"\"\c%c\" is more clearly written simply as \"%s\"\">"
+   "L</\"\"\c%c\" is more clearly written simply as \"%s\"\">") ; untouched!
+  ;; In perltie: Old-style section with markup" .
+  (cperl-test-wrap-podlink-process
+   "L<The C<untie> Gotcha>"
+   "L<The C<untie> Gotcha|/\"The C<untie> Gotcha\">")
+  ;; In perlfunc: markup in text and section
+  (cperl-test-wrap-podlink-process
+   "L<C<qE<sol>E<sol>>|/qE<sol>STRINGE<sol>>"
+   "L<C<qE<sol>E<sol>>|/qE<sol>STRINGE<sol>>") ; untouched!
+  ;; extended delimiter, allowing for messy and unbalanced content 
+  (cperl-test-wrap-podlink-process
+   "L<<< stuff containing <|/and >> anywhere >>>"
+   "L<<< stuff containing <|/and >> anywhere >>>") ; untouched!
+  ;; The following tests are taken from perlpodspec
+  (cperl-test-wrap-podlink-process
+   "L<Foo::Bar>"
+   "L<Foo::Bar|perldoc://Foo::Bar>")
+  (cperl-test-wrap-podlink-process
+   "L<Perlport's section on NL's|perlport/Newlines>"
+   "L<Perlport's section on NL's|perldoc://perlport/Newlines>")
+  (cperl-test-wrap-podlink-process
+   "L<perlport/Newlines>"
+   "L<perlport/Newlines|perldoc://perlport/Newlines>")
+  (cperl-test-wrap-podlink-process
+   "L<crontab(5)/\"DESCRIPTION\">"
+   "L<crontab(5)/\"DESCRIPTION\"|perldoc://crontab(5)/\"DESCRIPTION\"")
+  (cperl-test-wrap-podlink-process
+   "L</Object Attributes>"
+   "L</Object Attributes>") ; untouched!
+  (cperl-test-wrap-podlink-process
+   "L<https://www.perl.org/>"
+   "L<https://www.perl.org/>") ; untouched!
+  (cperl-test-wrap-podlink-process
+   "L<Perl.org|https://www.perl.org/>"
+   "L<Perl.org|https://www.perl.org/>") ; untouched!
+   )
