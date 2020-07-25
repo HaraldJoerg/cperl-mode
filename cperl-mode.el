@@ -8547,11 +8547,22 @@ The L<...> syntax is the most complex markup in the POD family of
 strange things.  Also, quite a lot of modules on CPAN and
 elsewhere found ways to violate the spec in interesting ways
 which seem to work, at least, with some formatters."
-  ;; Processing links can't be done by using <> as a bracket
-  ;; pair because link contents can contain unbalanced < or >
+  ;; Note: Processing links can't be done with syntax tables by using
+  ;; <> as a bracket pair because links can contain unbalanced < or >
   ;; symbols.  So do it the hard way....
   (goto-char (point-min))
-  ;; Tired of backslasheritis?  Well, I am.
+  ;; Links, in general, have three components: L<text|name/section>.
+  ;; In the following we match and capture like this:
+  ;; - (match-string 1) to text, which is optional
+  ;; - (match-string 2) to name, which is mandatory but may be empty
+  ;;   for targets in the same file.   We capture old-style sections
+  ;;   here, too, because syntactically they look like names.
+  ;; - (match-string 3) to section.
+  ;; Links can contain markup, too.  We support two levels of nesting
+  ;; (because we've seen such things in the wild), but only with
+  ;; single <> delimiters.  For the link element as a whole,
+  ;; L<<< stuff >>> is supported.
+  ;; By the way: Are you tired of backslasheritis?  Well, I am.
   (let* (({  "\\(?:")
          ({1 "\\(?1:")
          ({2 "\\(?2:")
@@ -8566,13 +8577,16 @@ which seem to work, at least, with some formatters."
                             ">"                           }     ))
          (quoted    (concat { "\"" "[^\"]+" "\""          }     ))
          (component (concat { plain or markup or nomarkup }     ))
-         (name      (concat {2 "[^ \t|/<>]*"              }     ))
+         (name      (concat {2 "[^ \"\t|/<>]*"            }     ))
          (url       (concat {2 "\\w+:/[^ |<>]+"           }     ))
          ;; old-style references to a section in the same page.
          ;; This style is deprecated, but found in the wild.  We are
          ;; following the recommended heuristic from perlpodspec:
          ;;    .... if it contains any whitespace, it's a section.
-         (old-sect  (concat {2 component "+ " component "+" } )))
+         ;; We also found quoted things to be sections.
+         (old-sect  (concat {2 { component "+ " component "+" }
+                            or quoted
+                            }  )))
     (while (re-search-forward "L<\\(<+ \\)?" nil t)
       (let* ((terminator-length (length (match-string 1)))
              (allow-angle (> terminator-length 0))
@@ -8587,11 +8601,13 @@ which seem to work, at least, with some formatters."
                            ">"))
              (link-re   (concat "\\="
                                 { { text "|" } "?"
-                                  { { name { "/" section } "?" }
-                                  or
-                                  url       ; can have text, but no section
-                                }
-                                or old-sect ; neither text nor section
+                                  {
+                                    { name { "/" section } "?" }
+                                    or
+                                    url       ; can have text, but no section
+                                    or
+                                    old-sect  ; can also have text :(
+                                  }
                                 }))
              (re        (concat link-re terminator))
              (end-marker (make-marker)))
@@ -8612,6 +8628,16 @@ which seem to work, at least, with some formatters."
           (insert "\"")
           (goto-char (match-beginning 2))
           (insert (concat (match-string 2) "|/\"")))
+         ((save-match-data
+            (and (match-string 1) (string-match quoted (match-string 2))))
+          ;; L<unlink1|"unlink1"> -> L<unlink1|/"unlink1">, as seen in File::Temp
+          (goto-char (match-beginning 2))
+          (insert "/"))
+         ((save-match-data
+            (string-match quoted (match-string 2)))
+          ;; L<"safe_level"> -> L<safe_level|/"safe_level">, as seen in File::Temp
+          (goto-char (match-beginning 2))
+          (insert (concat (substring (match-string 2) 1 -1) "|/")))
          ((match-string 1)
           ;; L<Some text|page/sect> -> L<Some text|perldoc://page/sect>
           (goto-char (match-beginning 2))

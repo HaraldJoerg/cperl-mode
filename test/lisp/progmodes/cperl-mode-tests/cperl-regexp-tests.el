@@ -101,7 +101,15 @@ processed (no runaway regex)."
   (cperl-test-wrap-podlink-process
    "L<Microsoft-related naming mess>"
    "L<Microsoft-related naming mess|/\"Microsoft-related naming mess\">")
-  ;; In perldiag: Unbalanced < in old-style section"
+  ;; In File::Temp: Quoted old-style section"
+  (cperl-test-wrap-podlink-process
+   "L<\"safe_level\">"
+   "L<safe_level|/\"safe_level\">")
+  ;; In File::Temp: Quoted old-style section with unquoted name"
+  (cperl-test-wrap-podlink-process
+   "L<unlink1|\"unlink1\">"
+   "L<unlink1|/\"unlink1\">")
+  ;; In perldiag: Unbalanced < in text"
   (cperl-test-wrap-podlink-process
    "L<(?<=pattern) and \\K in perlre|perlre/\\K>"
    "L<(?<=pattern) and \\K in perlre|perldoc://perlre/\\K>")
