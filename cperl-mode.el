@@ -97,6 +97,7 @@
       (setq list (cdr list)))
     answer))
 
+;;; Customization
 (defgroup cperl nil
   "Major mode for editing Perl code."
   :prefix "cperl-"
@@ -1102,6 +1103,7 @@ versions of Emacs."
     map)
   "Keymap used in CPerl mode.")
 
+;;; Menu
 (defvar cperl-menu)
 (defvar cperl-lazy-installed)
 (defvar cperl-old-style nil)
@@ -1282,7 +1284,7 @@ Should contain exactly one group.")
 "Regular expression to match whitespace with interspersed comments.
 Should contain exactly one group.")
 
-;;;; Perl core keywords and regular expressions
+;;; Perl core keywords and regular expressions
 ;; The following code allows Emacs to load different
 ;; keyword sets for fontification / indenting / indexing
 ;; either automatically or by user command(s).
@@ -1300,7 +1302,6 @@ when it finds the modules which export them in the buffer's file."
 (defvar cperl-core-namespace-ref-keywords
   '("require" "use" "no")
   "Keywords which introduce a namespace in Perl")
-
 
 (defvar cperl-core-functions-for-font-lock
   '("CORE" "__FILE__" "__LINE__" "__PACKAGE__" "__SUB__"
@@ -1623,8 +1624,7 @@ expressions which depend on these."
         cperl--block-regexp                  (regexp-opt (cperl-keywords ':block))
         cperl--named-block-regexp            (regexp-opt (cperl-keywords ':named-block))
         cperl--special-sub-regexp            (regexp-opt (cperl-keywords ':special-sub)))
-
-  ;;; imenu setup for the current buffer
+  ;; imenu setup for the current buffer
   ;; Details of groups in this are used in `cperl-imenu--create-perl-index'
   ;;  and `cperl-outline-level'.
   ;; Was: 2=sub|package; now 2=package-group, 5=package-name 8=sub-name (+3)
@@ -1645,7 +1645,6 @@ expressions which depend on these."
          "=head\\([1-4]\\)[ \t]+"           ; 16=level
          "\\([^\n]+\\)$"                    ; 17=text
          "\\)"))
-
   ;; outline setup
   (setq cperl-outline-regexp
         (concat cperl-imenu--function-name-regexp-perl "\\|" "\\`"))
@@ -1793,6 +1792,7 @@ the last)."
 
 (defvar compilation-error-regexp-alist)
 
+;;; cperl-mode
 ;;;###autoload
 (define-derived-mode cperl-mode prog-mode "CPerl"
   "Major mode for editing Perl code.
@@ -2898,7 +2898,7 @@ PRESTART is the position basing on which START was found."
 (defun cperl-beginning-of-property (p prop &optional lim)
   "Given that P has a property PROP, find where the property starts.
 Will not look before LIM."
-;;; XXXX What to do at point-max???
+;;;  XXXX What to do at point-max???
   (or (previous-single-property-change (cperl-1+ p) prop lim)
       (point-min))
   ;; (cond ((eq p (point-min))
@@ -4325,8 +4325,10 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
                                     (and (eq (char-syntax (preceding-char)) ?w)
                                          (progn
                                            (forward-sexp -1)
-;; After these keywords `/' starts a RE.  One should add all the
-;; functions/builtins which expect an argument, but ...
+                                           ;; After these keywords `/' starts a RE.
+                                           ;; One should add all the
+                                           ;; functions/builtins which expect an
+                                           ;; argument, but ...
                                            (if (eq (preceding-char) ?-)
                                                ;; -d ?foo? is a RE
                                                (looking-at "[a-zA-Z]\\>")
@@ -4735,8 +4737,8 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
                               (setq REx-subgr-end qtag)         ;End smart-highlighted
                               ;; Apparently, I can't put \] into a charclass
                               ;; in m]]: m][\\\]\]] produces [\\]]
-;;;   POSIX?  [:word:] [:^word:] only inside []
-;;;            "\\=\\(\\\\.\\|[^][\\]\\|\\[:\\^?\sw+:]\\|\\[[^:]\\)*]")
+                              ;;   POSIX?  [:word:] [:^word:] only inside []
+                              ;;            "\\=\\(\\\\.\\|[^][\\]\\|\\[:\\^?\sw+:]\\|\\[[^:]\\)*]")
                               (while    ; look for unescaped ]
                                   (and argument
                                        (re-search-forward
@@ -5651,6 +5653,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
           ;; Previous space could have gone:
           (or (memq (preceding-char) '(?\s ?\t)) (insert " "))))))
 
+;;; imenu functions
 (defun cperl-imenu-addback (lst &optional isback name)
   ;; We suppose that the lst is a DAG, unless the first element only
   ;; loops back, and ISBACK is set.  Thus this function cannot be
@@ -7506,7 +7509,7 @@ than a line.  Your contribution to update/shorten it is appreciated."
               (message "Nothing found for %s..."
                        (buffer-substring (point) (min (+ 5 (point)) (point-max))))))))))
 
-;;; Stolen from perl-descr.el by Johan Vromans:
+;; Stolen from perl-descr.el by Johan Vromans:
 
 (defvar cperl-doc-buffer " *perl-doc*"
   "Where the documentation can be found.")
@@ -8685,8 +8688,8 @@ which seem to work, at least, with some formatters."
           (goto-char (point-min))
           (re-search-forward (concat "^ *" anchor "\\W") nil t))
       (with-temp-buffer
-      ;; for diagnostics comment out the previous line, and uncomment the next
-      ; (with-current-buffer (get-buffer-create (concat "**pod-" word "**"))
+        ;; for diagnostics comment out the previous line, and uncomment the next
+        ;; (with-current-buffer (get-buffer-create (concat "**pod-" word "**"))
         ;; Fetch plain POD into a temporary buffer
         (when (< 0 (if is-func
                        (call-process cperl-perldoc-program nil t t "-u" "-f" word)
@@ -9141,7 +9144,7 @@ do extra unwind via `cperl-unwind-to-safe'."
   "Derived from version 6.2, the latest version supported by IZ.")
 
 
-;;;; cperl-mode extensions for non-core keyword sets
+;;; Extensions for non-core keyword sets
 ;;
 ;; Perl lives.  Modules and versions enable new keywords all the time.
 ;; Here's a plan to make cperl-mode flexible enough.
