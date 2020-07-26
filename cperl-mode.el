@@ -581,6 +581,18 @@ This way enabling/disabling of menu items is more correct."
                                    (repeat symbol)))))
   :group 'cperl-faces)
 
+(defcustom cperl-perldoc-program "perldoc"
+  "Path to the shell command perldoc."
+  :type 'file
+  :group 'cperl
+  :version 28)
+
+(defcustom cperl-pod2html-program "pod2html"
+  "Path to the shell command pod2html."
+  :type 'file
+  :group 'cperl
+  :version 28)
+
 (defvar cperl-dark-background
   (cperl-choose-color "navy" "os2blue" "darkgreen"))
 (defvar cperl-dark-foreground
@@ -8498,6 +8510,9 @@ the appropriate statement modifier."
 
 (declare-function Man-getpage-in-background "man" (topic))
 
+(declare-function shr-browse-url "shr" ())
+(declare-function shr-render-buffer "shr" (buffer))
+
 (defun cperl-perldoc-browse-url ()
   "Browse the URL at point, using either perldoc or `browse-url'.
 If the URL at point starts with a \"perldoc\" schema, then run
@@ -8726,18 +8741,6 @@ which seem to work, at least, with some formatters."
   "File name for `pod2man'."
   :type 'file
   :group 'cperl)
-
-(defcustom cperl-perldoc-program "perldoc"
-  "Path to the shell command perldoc."
-  :type 'file
-  :group 'cperl
-  :version 28)
-
-(defcustom cperl-pod2html-program "pod2html"
-  "Path to the shell command pod2html."
-  :type 'file
-  :group 'cperl
-  :version 28)
 
 ;; By Nick Roberts <Nick.Roberts@src.bae.co.uk> (with changes)
 (defun cperl-pod-to-manpage ()
