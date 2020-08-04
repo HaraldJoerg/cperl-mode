@@ -8513,11 +8513,32 @@ the appropriate statement modifier."
 (declare-function shr-browse-url "shr" ())
 (declare-function shr-render-buffer "shr" (buffer))
 
+(defun cperl--perldoc-goto-section (section)
+  "Find SECTION in the current buffer.
+There is no precise indicator for SECTION in shr-generated
+buffers, so this function is using some fuzzy regexp matching
+which takes into account that the perldoc/pod2html workflow has
+no clear specification what makes a section."
+  (goto-char (point-min))
+  ;; Here's a workaround for a misunderstanding between pod2html and
+  ;; shr: pod2html converts a section like "/__SUB__" to a fragment
+  ;; "#SUB__".  The shr renderer doesn't pick id elements in its
+  ;; character properties, so we need to sloppily allow leading "__"
+  ;; before looking for the text of the heading.
+  (let ((target-re (replace-regexp-in-string "-" "." section))
+        (prefix "^\\(__\\)?")
+        (suffix "\\([[:blank:]]\\|$\\)"))
+    (if (re-search-forward (concat prefix target-re suffix) nil t)
+        (goto-char (line-beginning-position))
+      (message "Warning: No section '%s' found." section))))
+
 (defun cperl-perldoc-browse-url ()
-  "Browse the URL at point, using either perldoc or `browse-url'.
+  "Browse the URL at point, using either perldoc or `shr-browse-url'.
 If the URL at point starts with a \"perldoc\" schema, then run
-cperl-perldoc.  If it is a local fragment, find it. Otherwise,
-run browse-url."
+either cperl-perldoc, or produce a man-page if the URL is of the
+type \"topic(section)\".  If it is a local fragment, just search
+for it in the current buffer.  For URLs with a schema, run
+browse-url."
   (interactive)
   (require 'shr)
   (let ((url (get-text-property (point) 'shr-url)))
@@ -8525,25 +8546,25 @@ run browse-url."
       (cond
        ((string-match (concat "^perldoc://"        ; our scheme
                                 "\\(?:\\(?1:.*\\)"   ; 1: page, may be empty
-                                "/\\(?2:.+\\)"       ; "/" + 2: nonzero anchor
+                                "\\(?:#\\|/\\)"      ; section separator
+                                "\\(?2:.+\\)" ; "/" + 2: nonzero section
                                 "\\|"                ; or
                                 "\\(?1:.+\\)\\)$")   ; 1: just a page
                         url)
           ;; link to be handled by cperl-perldoc
         (let ((page   (match-string 1 url))
-              (anchor (match-string 2 url)))
+              (section (match-string 2 url)))
           (if (> (length page) 0)
-              (cperl-perldoc page anchor)
-            (when anchor
-              (goto-char (point-min))
-              (re-search-forward (concat "^\\s*" anchor "\\s*$") nil t)))))
+              (if (null (string-match "([1-9])$" page))
+                  (cperl-perldoc page section))
+            (when section
+              (cperl--perldoc-goto-section section)))))
        ((string-match "^#\\(.+\\)" url)
-        ;; local anchor created by pod2html
-        (let* ((fragment (match-string 1 url))
-               (regexp   (replace-regexp-in-string "-" ".+" fragment)))
-          (goto-char (point-min))
-          (or (re-search-forward (concat "^ *" regexp) nil t)
-              (goto-char (point-min)))))
+        ;; local section created by pod2html
+        (if (boundp 'cperl-perldoc-base)
+            (cperl-perldoc cperl-perldoc-base
+                           (match-string-no-properties 1 url))
+        (cperl--perldoc-goto-section (match-string-no-properties 1 url))))
        (t
         (shr-browse-url))))))
 
@@ -8587,16 +8608,28 @@ which seem to work, at least, with some formatters."
          ({3 "\\(?3:")
          (}  "\\)")
          (or "\\|")
-         (plain     (concat { "[^|/<>]"                   }     ))
-         (extended  (concat { "[^|/]"                     }     ))
-         (nomarkup  (concat { "[^A-Z]<"                   }     ))
-         (markup    (concat { "[A-Z]<"
-                            { "[A-Z]<[^>|/]+>" or "[^|/>]" } "+"
-                            ">"                           }     ))
-         (quoted    (concat { "\"" "[^\"]+" "\""          }     ))
-         (component (concat { plain or markup or nomarkup }     ))
-         (name      (concat {2 "[^ \"\t|/<>]*"            }     ))
-         (url       (concat {2 "\\w+:/[^ |<>]+"           }     ))
+         (bs "\\\\")
+         (q  "\"")
+         (ws        (concat { "[[:blank:]]" or "\n" } ))
+         (quoted    (concat { q { bs bs or bs q or "[^\"]" } "*" q } ))
+         (plain     (concat { "[^|/<>]" } ))
+         (extended  (concat { "[^|/]" } ))
+         (nomarkup  (concat { "[^A-Z]<" } ))
+         (no-del    (concat { bs "|" or bs "/" or "[^|/]" } ))
+         (m2        (concat { "[A-Z]<<" ws no-del "+?" ws ">>" } ))
+         (m0        (concat { "[A-Z]<" { "[^<>|/]" or nomarkup } "+?>" } ))
+         (markup    (concat { m2 or "[A-Z]<"
+                            { m2 or m0 or nomarkup or "[^|/>]" }
+                            "+?>" } ))
+         ;; (markup    (concat {
+         ;;                    { "[A-Z]<[^<]"
+         ;;                    { "[A-Z]<[^<][^>|/]*>" or "[^|/>]" } "*"
+         ;;                    ">" } }
+         ;;                    or
+         ;;                    { "[A-Z]<<" ws "[^|/]+?" ws ">>" }))
+         (component (concat { plain or markup or nomarkup } ))
+         (name      (concat {2 { "[^ \"\t|/<>]" or markup } "*" } ))
+         (url       (concat {2 "\\w+:/[^ |<>]+" } ))
          ;; old-style references to a section in the same page.
          ;; This style is deprecated, but found in the wild.  We are
          ;; following the recommended heuristic from perlpodspec:
@@ -8621,10 +8654,7 @@ which seem to work, at least, with some formatters."
                                 { { text "|" } "?"
                                   {
                                     { name { "/" section } "?" }
-                                    or
-                                    url       ; can have text, but no section
-                                    or
-                                    old-sect  ; can also have text :(
+                                    or url or old-sect
                                   }
                                 }))
              (re        (concat link-re terminator))
@@ -8632,6 +8662,14 @@ which seem to work, at least, with some formatters."
         (re-search-forward re nil t)
         (set-marker end-marker (match-end 0))
         (cond
+         ((null (match-string 2))
+          ;; This means that the regexp failed.  Either the L<...>
+          ;; element is really, really bad, or the regexp isn't
+          ;; complicated enough.  Since the consequences are rather
+          ;; harmless, don't raise an error.
+          (message "cperl-perldoc: Unexpected string: %s"
+                   (buffer-substring (line-beginning-position)
+                                     (line-end-position))))
          ((string= (match-string 2) "")
           ;; L<Some text|/anchor> or L</anchor> -> don't touch
           nil)
@@ -8656,15 +8694,38 @@ which seem to work, at least, with some formatters."
           ;; L<"safe_level"> -> L<safe_level|/"safe_level">, as seen in File::Temp
           (goto-char (match-beginning 2))
           (insert (concat (substring (match-string 2) 1 -1) "|/")))
-         ((match-string 1)
+         ((match-string 3)
           ;; L<Some text|page/sect> -> L<Some text|perldoc://page/sect>
+          ;; L<page/section> -> L<page/section|perldoc://page/section>
+          ;; In both cases:
+          ;; Work around a bug in pod2html as of 2020-07-27: It
+          ;; doesn't grok spaces in the "section" part, though they
+          ;; are perfectly valid.  Also, it retains quotes around
+          ;; sections which it removes for links to local sections.
+          (let ((section (match-string 3))
+                (text (if (match-string 1) ""
+                        (concat (match-string 3)
+                                " in "
+                                (match-string 2) "|"))))
+              (save-match-data
+                (setq section (replace-regexp-in-string "\"" "" section))
+                (setq section (replace-regexp-in-string " " "-" section)))
+              (goto-char (match-beginning 3))
+              (delete-char (- (match-end 3) (match-beginning 3)))
+              (insert section)
+              (goto-char (match-beginning 2))
+              (insert text)
+              (insert "perldoc://")))
+         ((match-string 1) ; but without section
+          ;; L<Some text|page> -> L<Some text|perldoc://page>
           (goto-char (match-beginning 2))
           (insert "perldoc://"))
-         ((match-string 3)
-          ;; L<page/section> -> L<page/section|perldoc://page/section>
-          (goto-char (match-beginning 2))
-          (insert (concat (match-string 2) "/" (match-string 3)
-                          "|" "perldoc://")))
+         ;; ((match-string 3)
+         ;;  ;; L<page/section> -> L<page/section|perldoc://page/section>
+         ;;  ;; Work around a bug in pod2html as of 2020-07-27, see above
+         ;;  (goto-char (match-beginning 2))
+         ;;  (insert (concat (match-string 3) " in " (match-string 2)
+         ;;                  "|" "perldoc://")))
          (t
           ;; L<page> -> L<page|perldoc://page>
           (goto-char (match-beginning 2))
@@ -8673,7 +8734,7 @@ which seem to work, at least, with some formatters."
 
 
 ;;;###autoload
-(defun cperl-perldoc (word &optional anchor)
+(defun cperl-perldoc (word &optional section)
   "Run the shell command 'perldoc' on WORD, on Win32 platforms."
   (interactive (list (let* ((default-entry (cperl-word-at-point))
                 (input (read-string
@@ -8698,12 +8759,11 @@ which seem to work, at least, with some formatters."
                                  (substring-no-properties word)
                                  "*")))
     (if (get-buffer perldoc-buffer)
-        (progn
-          (pop-to-buffer perldoc-buffer)
-          (goto-char (point-min))
-          (re-search-forward (concat "^ *" anchor "\\W") nil t))
+        (switch-to-buffer perldoc-buffer)
       (with-temp-buffer
-        ;; for diagnostics comment out the previous line, and uncomment the next
+        ;; for diagnostics comment out the previous line, and
+        ;; uncomment the next.  This makes the intermediate buffer
+        ;; permanent for inspection in the pod- and html-phase.
         ;; (with-current-buffer (get-buffer-create (concat "**pod-" word "**"))
         ;; Fetch plain POD into a temporary buffer
         (when (< 0 (if is-func
@@ -8724,11 +8784,13 @@ which seem to work, at least, with some formatters."
       (rename-buffer perldoc-buffer t)
       (put-text-property (point-min) (point-max)
                          'keymap cperl-perldoc-shr-map)
+      (when is-func
+        (make-local-variable 'cperl-perldoc-base)
+        (setq cperl-perldoc-base "perlfunc"))
       (set-buffer-modified-p nil)
-      (read-only-mode)
-      (when anchor
-        (goto-char (point-min))
-        (re-search-forward (concat "^ *" anchor "\\W") nil t)))))
+      (read-only-mode))
+    (when section
+      (cperl--perldoc-goto-section section))))
 
 
 ;;;###autoload

@@ -105,6 +105,10 @@ processed (no runaway regex)."
   (cperl-test-wrap-podlink-process
    "L<\"safe_level\">"
    "L<safe_level|/\"safe_level\">")
+  ;; In perlfunc: page with quoted section according to spec
+  (cperl-test-wrap-podlink-process
+   "L<perlsyn/\"Compound Statements\">"
+   "L<\"Compound Statements\" in perlsyn|perldoc://perlsyn/Compound-Statements>")
   ;; In File::Temp: Quoted old-style section with unquoted name"
   (cperl-test-wrap-podlink-process
    "L<unlink1|\"unlink1\">"
@@ -115,8 +119,8 @@ processed (no runaway regex)."
    "L<(?<=pattern) and \\K in perlre|perldoc://perlre/\\K>")
   ;; In perldiag: Messy quotes in section
   (cperl-test-wrap-podlink-process
-   "L</\"\"\c%c\" is more clearly written simply as \"%s\"\">"
-   "L</\"\"\c%c\" is more clearly written simply as \"%s\"\">") ; untouched!
+   "L</\"\"\\c%c\" is more clearly written simply as \"%s\"\">"
+   "L</\"\"\\c%c\" is more clearly written simply as \"%s\"\">") ; untouched!
   ;; In perltie: Old-style section with markup" .
   (cperl-test-wrap-podlink-process
    "L<The C<untie> Gotcha>"
@@ -125,10 +129,24 @@ processed (no runaway regex)."
   (cperl-test-wrap-podlink-process
    "L<C<qE<sol>E<sol>>|/qE<sol>STRINGE<sol>>"
    "L<C<qE<sol>E<sol>>|/qE<sol>STRINGE<sol>>") ; untouched!
-  ;; extended delimiter, allowing for messy and unbalanced content 
+;; In perlfunc: Markup immediately followed by markup
   (cperl-test-wrap-podlink-process
-   "L<<< stuff containing <|/and >> anywhere >>>"
-   "L<<< stuff containing <|/and >> anywhere >>>") ; untouched!
+   "L<S<C<\"use feature 'unicode_strings\">>|feature/The 'unicode_strings' feature>"
+   "L<S<C<\"use feature 'unicode_strings\">>|perldoc://feature/The-'unicode_strings'-feature>")
+  ;; In perlsyn: Doubly braced markup within a link - and NL instead of a space
+  (cperl-test-wrap-podlink-process
+  "L<C<< <FILEHANDLE>
+>>|perlop/\"I/O Operators\">"
+  "L<C<< <FILEHANDLE>
+>>|perldoc://perlop/I/O-Operators>")
+  ;; In perlapi - an external manpage.  pod2html handles markup!
+  (cperl-test-wrap-podlink-process
+   "L<C<setlocale(3)>>"
+   "L<C<setlocale(3)>|perldoc://C<setlocale(3)>>")
+  ;; extended delimiter, allowing for messy and unbalanced content
+  (cperl-test-wrap-podlink-process
+   "L<< stuff containing <|/and > anywhere >>"
+   "L<< stuff containing <|/and > anywhere >>") ; untouched!
   ;; The following tests are taken from perlpodspec
   (cperl-test-wrap-podlink-process
    "L<Foo::Bar>"
@@ -138,10 +156,10 @@ processed (no runaway regex)."
    "L<Perlport's section on NL's|perldoc://perlport/Newlines>")
   (cperl-test-wrap-podlink-process
    "L<perlport/Newlines>"
-   "L<perlport/Newlines|perldoc://perlport/Newlines>")
+   "L<Newlines in perlport|perldoc://perlport/Newlines>")
   (cperl-test-wrap-podlink-process
    "L<crontab(5)/\"DESCRIPTION\">"
-   "L<crontab(5)/\"DESCRIPTION\"|perldoc://crontab(5)/\"DESCRIPTION\"")
+   "L<\"DESCRIPTION\" in crontab(5)|perldoc://crontab(5)/DESCRIPTION")
   (cperl-test-wrap-podlink-process
    "L</Object Attributes>"
    "L</Object Attributes>") ; untouched!
@@ -151,4 +169,4 @@ processed (no runaway regex)."
   (cperl-test-wrap-podlink-process
    "L<Perl.org|https://www.perl.org/>"
    "L<Perl.org|https://www.perl.org/>") ; untouched!
-   )
+  )
