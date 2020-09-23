@@ -457,8 +457,7 @@ Older version of this page was called `perl5', newer `perl'."
   :type 'string
   :group 'cperl-help-system)
 
-(defcustom cperl-use-syntax-table-text-property
-  (boundp 'parse-sexp-lookup-properties)
+(defcustom cperl-use-syntax-table-text-property t
   "Non-nil means CPerl sets up and uses `syntax-table' text property."
   :type 'boolean
   :group 'cperl-speed)
@@ -541,8 +540,7 @@ One should tune up `cperl-close-paren-offset' as well."
   :type 'boolean
   :group 'cperl-indentation-details)
 
-(defcustom cperl-syntaxify-by-font-lock
-  (boundp 'parse-sexp-lookup-properties)
+(defcustom cperl-syntaxify-by-font-lock t
   "Non-nil means that CPerl uses the `font-lock' routines for syntaxification."
   :type '(choice (const message) boolean)
   :group 'cperl-speed)
@@ -1099,10 +1097,6 @@ versions of Emacs."
       (define-key map [(control ?c) (control ?h) ?v]
         ;;(concat (char-to-string help-char) "v") ; does not work
         'cperl-get-help))
-    (or (boundp 'fill-paragraph-function)
-        (substitute-key-definition
-         'fill-paragraph 'cperl-fill-paragraph
-         map global-map))
     (substitute-key-definition
      'indent-sexp 'cperl-indent-exp
      map global-map)
@@ -2013,9 +2007,8 @@ or as help on variables `cperl-tips', `cperl-problems',
                "\\)"
                cperl-maybe-white-and-comment-rex))
   (set (make-local-variable 'comment-indent-function) #'cperl-comment-indent)
-  (and (boundp 'fill-paragraph-function)
-       (set (make-local-variable 'fill-paragraph-function)
-            #'cperl-fill-paragraph))
+  (set (make-local-variable 'fill-paragraph-function)
+       #'cperl-fill-paragraph)
   (set (make-local-variable 'parse-sexp-ignore-comments) t)
   (set (make-local-variable 'indent-region-function) #'cperl-indent-region)
   ;;(setq auto-fill-function #'cperl-do-auto-fill) ; Need to switch on and off!
@@ -6005,7 +5998,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
               (if (eq (char-after (match-beginning 2)) ?%)
                   'cperl-hash-face
                 'cperl-array-face)
-              t)                        ; arrays and hashes
+	      nil)			; arrays and hashes
              ("\\(\\([$@]+\\)[a-zA-Z_:][a-zA-Z0-9_:]*\\)[ \t]*\\([[{]\\)"
               1
               (if (= (- (match-end 2) (match-beginning 2)) 1)
@@ -6040,8 +6033,8 @@ indentation and initial hashes.  Behaves usually outside of comment."
                   t-font-lock-keywords)
                 cperl-font-lock-keywords cperl-font-lock-keywords-1
                 cperl-font-lock-keywords-2 (append
-                                            cperl-font-lock-keywords-1
-                                            t-font-lock-keywords-1)))
+					   t-font-lock-keywords-1
+					   cperl-font-lock-keywords-1)))
         (if (fboundp 'ps-print-buffer) (cperl-ps-print-init))
         ;; Do it the dull way, without choose-color
         ;; In fact, _always_ do it the dull way, since choose-color
@@ -6434,7 +6427,8 @@ See examples in `cperl-style-examples'.")
   "Set CPerl mode variables to use one of several different indentation styles.
 The arguments are a string representing the desired style.
 The list of styles is in `cperl-style-alist', available styles
-are CPerl, PBP, PerlStyle, GNU, K&R, BSD, C++ and Whitesmith.
+are \"CPerl\", \"PBP\", \"PerlStyle\", \"GNU\", \"K&R\", \"BSD\", \"C++\"
+and \"Whitesmith\".
 
 The current value of style is memorized (unless there is a memorized
 data already), may be restored by `cperl-set-style-back'.
@@ -7106,7 +7100,7 @@ Use as
               (insert (cperl-find-tags file xs topdir))))))
       (if inbuffer nil                  ; Delegate to the caller
         (save-buffer 0)                         ; No backup
-        (if (fboundp 'initialize-new-tags-table) ; Do we need something special in XEmacs?
+	(if (fboundp 'initialize-new-tags-table)
             (initialize-new-tags-table))))))
 
 (defvar cperl-hierarchy '(() ())
