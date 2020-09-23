@@ -9251,6 +9251,7 @@ do extra unwind via `cperl-unwind-to-safe'."
 (cperl-add-keyword-set 'Function::Parameters
                        cperl-function-parameters-keywords-set)
 
+;;;; Specify a new keyword set: Test::More
 (defvar cperl-test-more-keywords-set
   '(:functions ("can_ok" "cmp_ok" "diag" "done_testing" "explain" "fail"
                 "is" "is_deeply" "isa_ok" "isnt" "like" "new_ok" "note"
@@ -9259,6 +9260,56 @@ do extra unwind via `cperl-unwind-to-safe'."
   "Functions imported by Test::More")
 (cperl-add-keyword-set 'Test::More
                        cperl-test-more-keywords-set)
+
+;;;; Specify a new keyword set: Syntax::Keyword::Try
+(defvar cperl-syntax-keyword-try-flow-control-keywords
+  '("try" "catch" "finally")
+  "The keywords try/catch/finally come in many flavors.  With
+  Syntax::Keyword::Try, their blocks don't require a semicolon at
+  the end, so they are not just \"plain\" keywords.")
+
+;;;; Specify a new keyword set: Zydeco
+(defvar cperl-zydeco-nonoverridable-keywords
+  '("begin" "end" "after_apply" "before_apply"
+    "type_name" "requires" "has"
+    "constant" "from" "coerce"
+    "before" "after" "around"
+    "overload" "authority" "version"  ; not part of the grammar
+    "true" "false" "rw" "rwp" "ro"    ; constants, also not part of
+    "lazy" "bare" "private")          ; the grammar
+  "New keywords for Zydeco - similar, but richer than Moo*")
+
+(defvar cperl-zydeco-flow-control-keywords
+  cperl-syntax-keyword-try-flow-control-keywords
+  "They're just the same.")
+
+(defvar cperl-zydeco-namespace-declare-keywords ; that's a mouthful
+  '("abstract class" "class" "role" "interface")
+  "Zydeco keywords which define a new namespace")
+
+(defvar cperl-zydeco-namespace-ref-keywords
+  '("include" "toolkit" "extends" "with")
+  "Zydeco keywords followed by a namespace declared elsewhere"
+)
+
+(defvar cperl-zydeco-sub-keywords
+  '("method" "multi method" "factory" "multi factory" "via")
+  "Zydeco keywords to define a new sub-like thing")
+
+(defvar cperl-zydeco-sub-ref-keywords
+  '("after" "before" "around")
+  "Zydeco keywords to refer to a sub defined elsewhere")
+
+(defvar cperl-zydeco-keywords
+  (list ':functions         cperl-zydeco-nonoverridable-keywords
+        ':flow-control      cperl-zydeco-flow-control-keywords
+        ':namespace-declare cperl-zydeco-namespace-declare-keywords
+        ':namespace-ref     cperl-zydeco-namespace-ref-keywords
+        ':sub               cperl-zydeco-sub-keywords
+        ':sub-ref           cperl-zydeco-sub-ref-keywords))
+
+(cperl-add-keyword-set 'Zydeco
+                       cperl-zydeco-keywords)
 
 (provide 'cperl-mode)
 
