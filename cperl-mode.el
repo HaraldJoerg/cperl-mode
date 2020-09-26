@@ -1704,10 +1704,9 @@ or as help on variables `cperl-tips', `cperl-problems',
   (if cperl-hook-after-change
       (add-hook 'after-change-functions #'cperl-after-change-function nil t))
   ;; After hooks since fontification will break this
-  (if cperl-pod-here-scan
-      (or cperl-syntaxify-by-font-lock
-       (progn (or cperl-faces-init (cperl-init-faces-weak))
-	      (cperl-find-pods-heres))))
+  (when (and cperl-pod-here-scan
+             (not cperl-syntaxify-by-font-lock))
+    (cperl-find-pods-heres))
   ;; Setup Flymake
   (add-hook 'flymake-diagnostic-functions #'perl-flymake nil t))
 
@@ -3251,8 +3250,6 @@ Works before syntax recognition is done."
     result))
 
 
-(defvar font-lock-string-face)
-(defvar font-lock-constant-face)
 (defsubst cperl-postpone-fontification (b e type val &optional now)
   ;; Do after syntactic fontification?
   (if cperl-syntaxify-by-font-lock
@@ -5452,17 +5449,6 @@ indentation and initial hashes.  Behaves usually outside of comment."
   (or cperl-faces-init (cperl-init-faces))
   cperl-font-lock-keywords-2)
 
-(defun cperl-init-faces-weak ()
-  ;; Allow `cperl-find-pods-heres' to run.
-  (or (boundp 'font-lock-constant-face)
-      (cperl-force-face font-lock-constant-face
-                        "Face for constant and label names"))
-  (or (boundp 'font-lock-warning-face)
-      (cperl-force-face font-lock-warning-face
-			"Face for things which should stand out"))
-  ;;(setq font-lock-constant-face 'font-lock-constant-face)
-  )
-
 (defun cperl-init-faces ()
   (condition-case errs
       (progn
@@ -5626,11 +5612,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
 	      2 font-lock-function-name-face)
 	    '("^[ \t]*format[ \t]+\\([a-zA-Z_][a-zA-Z_0-9:]*\\)[ \t]*=[ \t]*$"
 	      1 font-lock-function-name-face)
-	    (cond ((featurep 'font-lock-extra)
-		   '("\\([]}\\%@>*&]\\|\\$[a-zA-Z0-9_:]*\\)[ \t]*{[ \t]*\\(-?[a-zA-Z0-9_:]+\\)[ \t]*}"
-		     (2 font-lock-string-face t)
-		     (0 '(restart 2 t)))) ; To highlight $a{bc}{ef}
-		  (font-lock-anchored
+	    (cond (font-lock-anchored
 		   '("\\([]}\\%@>*&]\\|\\$[a-zA-Z0-9_:]*\\)[ \t]*{[ \t]*\\(-?[a-zA-Z0-9_:]+\\)[ \t]*}"
 		     (2 font-lock-string-face t)
 		     ("\\=[ \t]*{[ \t]*\\(-?[a-zA-Z0-9_:]+\\)[ \t]*}"
@@ -5648,15 +5630,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
             ;;; '("[$*]{?\\(\\sw+\\)" 1 font-lock-variable-name-face)
             ;;; '("\\([@%]\\|\\$#\\)\\(\\sw+\\)"
             ;;;  (2 (cons font-lock-variable-name-face '(underline))))
-	    (cond ((featurep 'font-lock-extra)
-		   '("^[ \t]*\\(state\\|my\\|local\\|our\\)[ \t]*\\(([ \t]*\\)?\\([$@%*][a-zA-Z0-9_:]+\\)\\([ \t]*,\\)?"
-		     (3 font-lock-variable-name-face)
-		     (4 '(another 4 nil
-				  ("\\=[ \t]*,[ \t]*\\([$@%*][a-zA-Z0-9_:]+\\)\\([ \t]*,\\)?"
-				   (1 font-lock-variable-name-face)
-				   (2 '(restart 2 nil) nil t)))
-			nil t)))	; local variables, multiple
-		  (font-lock-anchored
+	    (cond (font-lock-anchored
 		   ;; 1=my_etc, 2=white? 3=(+white? 4=white? 5=var
 		   `(,(concat "\\<\\(state\\|my\\|local\\|our\\)"
 				  cperl-maybe-white-and-comment-rex
