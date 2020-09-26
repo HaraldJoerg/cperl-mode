@@ -79,13 +79,6 @@
 (defvar vc-rcs-header)
 (defvar vc-sccs-header)
 
-(defmacro cperl-force-face (arg descr)  ; Takes unquoted arg
-  `(progn
-     (or (facep (quote ,arg))
-         (make-face ,arg))
-     (or (boundp (quote ,arg))          ; We use unquoted variants too
-         (defvar ,arg (quote ,arg) ,descr))))
-
 (defun cperl-choose-color (&rest list)
   "Return the first color from LIST which is supported on the frame."
   (let (answer)
@@ -681,10 +674,6 @@ micro-docs on what I know about CPerl problems.")
 
 (defvar cperl-problems 'please-ignore-this-line
   "Description of problems in CPerl mode.
-Some faces will not be shown on some versions of Emacs unless you
-install choose-color.el, available from
-  http://ilyaz.org/software/emacs
-
 `fill-paragraph' on a comment may leave the point behind the
 paragraph.  It also triggers a bug in some versions of Emacs (CPerl tries
 to detect it and bulk out).
@@ -2092,10 +2081,9 @@ or as help on variables `cperl-tips', `cperl-problems',
   (if cperl-hook-after-change
       (add-hook 'after-change-functions #'cperl-after-change-function nil t))
   ;; After hooks since fontification will break this
-  (if cperl-pod-here-scan
-      (or cperl-syntaxify-by-font-lock
-       (progn (or cperl-faces-init (cperl-init-faces-weak))
-              (cperl-find-pods-heres))))
+  (when (and cperl-pod-here-scan
+             (not cperl-syntaxify-by-font-lock))
+    (cperl-find-pods-heres))
   ;; Setup Flymake
   (add-hook 'flymake-diagnostic-functions #'perl-flymake nil t))
 
@@ -3638,9 +3626,6 @@ Works before syntax recognition is done."
     result))
 
 
-(defvar font-lock-string-face)
-;;(defvar font-lock-reference-face)
-(defvar font-lock-constant-face)
 (defsubst cperl-postpone-fontification (b e type val &optional now)
   ;; Do after syntactic fontification?
   (if cperl-syntaxify-by-font-lock
@@ -3703,18 +3688,8 @@ Works before syntax recognition is done."
                   end (next-single-property-change end 'syntax-type nil (point-max)))
             (if end (progn (goto-char end)
                            (or (bolp) (forward-line 1))
-                           (setq end (point)))))
-          (or end pos)))))
-
-;; These are needed for byte-compile (at least with v19)
-(defvar cperl-nonoverridable-face)
-(defvar font-lock-variable-name-face)
-(defvar font-lock-function-name-face)
-(defvar font-lock-keyword-face)
-(defvar font-lock-builtin-face)
-(defvar font-lock-type-face)
-(defvar font-lock-comment-face)
-(defvar font-lock-warning-face)
+			   (setq end (point)))))
+	  (or end pos)))))
 
 (defun cperl-find-sub-attrs (&optional st-l b-fname e-fname pos)
   "Syntactically mark (and fontify) attributes of a subroutine.
@@ -5877,17 +5852,6 @@ indentation and initial hashes.  Behaves usually outside of comment."
   (or cperl-faces-init (cperl-init-faces))
   cperl-font-lock-keywords-2)
 
-(defun cperl-init-faces-weak ()
-  ;; Allow `cperl-find-pods-heres' to run.
-  (or (boundp 'font-lock-constant-face)
-      (cperl-force-face font-lock-constant-face
-                        "Face for constant and label names"))
-  (or (boundp 'font-lock-warning-face)
-      (cperl-force-face font-lock-warning-face
-                        "Face for things which should stand out"))
-  ;;(setq font-lock-constant-face 'font-lock-constant-face)
-  )
-
 (defun cperl-init-faces ()
   ;; TODO: when to collect the keywords needs to be reviewed if we
   ;; want to allow different keyword sets in different cperl-mode
@@ -5920,7 +5884,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
               "\\(?:^\\|[^$@%&\\]\\)\\<\\("
               cperl--nonoverridable-regexp
               "\\)\\>")
-             1 'cperl-nonoverridable-face)
+             1 ''cperl-nonoverridable-face)
             '("-[rwxoRWXOezsfdlpSbctugkTBMAC]\\>\\([ \t]+_\\>\\)?" 0
               font-lock-function-name-face keep) ; Not very good, triggers at "[a-z]"
             ;; This highlights declarations and definitions differently.
@@ -6041,87 +6005,6 @@ indentation and initial hashes.  Behaves usually outside of comment."
         ;; Do it the dull way, without choose-color
         ;; In fact, _always_ do it the dull way, since choose-color
         ;; is no longer available (nor is font-lock-extra) -- haj 2020-06-19
-        (cperl-force-face font-lock-constant-face
-                          "Face for constant and label names")
-        (cperl-force-face font-lock-variable-name-face
-                          "Face for variable names")
-        (cperl-force-face font-lock-type-face
-                          "Face for data types")
-        (cperl-force-face cperl-nonoverridable-face
-                          "Face for data types from another group")
-        (cperl-force-face font-lock-warning-face
-                          "Face for things which should stand out")
-        (cperl-force-face font-lock-comment-face
-                          "Face for comments")
-        (cperl-force-face font-lock-function-name-face
-                          "Face for function names")
-        ;;(defvar font-lock-constant-face 'font-lock-constant-face)
-        ;;(defvar font-lock-variable-name-face 'font-lock-variable-name-face)
-        ;;(or (boundp 'font-lock-type-face)
-        ;;    (defconst font-lock-type-face
-        ;;    'font-lock-type-face
-        ;;    "Face to use for data types."))
-        ;;(or (boundp 'cperl-nonoverridable-face)
-        ;;    (defconst cperl-nonoverridable-face
-        ;;    'cperl-nonoverridable-face
-        ;;    "Face to use for data types from another group."))
-        (if (and
-             (not (facep 'cperl-array-face))
-             (facep 'font-lock-emphasized-face))
-            (copy-face 'font-lock-emphasized-face 'cperl-array-face))
-        (if (and
-             (not (facep 'cperl-hash-face))
-             (facep 'font-lock-other-emphasized-face))
-            (copy-face 'font-lock-other-emphasized-face 'cperl-hash-face))
-        (if (and
-             (not (facep 'cperl-nonoverridable-face))
-             (facep 'font-lock-other-type-face))
-            (copy-face 'font-lock-other-type-face 'cperl-nonoverridable-face))
-        ;;(or (boundp 'cperl-hash-face)
-        ;;    (defconst cperl-hash-face
-        ;;    'cperl-hash-face
-        ;;    "Face to use for hashes."))
-        ;;(or (boundp 'cperl-array-face)
-        ;;    (defconst cperl-array-face
-        ;;    'cperl-array-face
-        ;;    "Face to use for arrays."))
-        (let ((background 'light))
-          (and (not (facep 'font-lock-constant-face))
-               (facep 'font-lock-reference-face)
-               (copy-face 'font-lock-reference-face 'font-lock-constant-face))
-          (if (facep 'font-lock-type-face) nil
-            (copy-face 'default 'font-lock-type-face)
-            (cond
-             ((eq background 'light)
-              (set-face-foreground 'font-lock-type-face
-                                   (if (x-color-defined-p "seagreen")
-                                       "seagreen"
-                                     "sea green")))
-             ((eq background 'dark)
-              (set-face-foreground 'font-lock-type-face
-                                   (if (x-color-defined-p "os2pink")
-                                       "os2pink"
-                                     "pink")))
-             (t
-              (set-face-background 'font-lock-type-face "gray90"))))
-          (if (facep 'cperl-nonoverridable-face)
-              nil
-            (copy-face 'font-lock-type-face 'cperl-nonoverridable-face)
-            (cond
-             ((eq background 'light)
-              (set-face-foreground 'cperl-nonoverridable-face
-                                   (if (x-color-defined-p "chartreuse3")
-                                       "chartreuse3"
-                                     "chartreuse")))
-             ((eq background 'dark)
-              (set-face-foreground 'cperl-nonoverridable-face
-                                   (if (x-color-defined-p "orchid1")
-                                       "orchid1"
-                                     "orange")))))
-          (if (facep 'font-lock-variable-name-face) nil
-            (copy-face 'italic 'font-lock-variable-name-face))
-          (if (facep 'font-lock-constant-face) nil
-            (copy-face 'italic 'font-lock-constant-face)))
         (setq cperl-faces-init t))
     (error (message "cperl-init-faces (ignored): %s" errs))))
 
