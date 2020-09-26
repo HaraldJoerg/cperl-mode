@@ -9,7 +9,7 @@
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: languages, Perl
 
-;; Package-Requires: ((emacs "26.3"))
+;; Package-Requires: ((emacs "27.1"))
 ;; Package-Version: 7.00
 ;; Homepage: https://github.com/HaraldJoerg/cperl-mode
 
