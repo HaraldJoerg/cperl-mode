@@ -19,7 +19,29 @@ The Perl programming language is evolving, and so should cperl-mode.  Currently 
 
 Also, many popular modules import subroutines into your source code which behave like keywords, though technically they are just plain subroutines.  Yet, I'd love to read such source code with highlighting of these keywords.  Examples for such modules are OO-frameworks like Moose et al. with "keywords" like `has` and `extends`, test frameworks with `is`, `is_deeply` and many others, Plack with `builder`, `enable`  and `mount`, and various exception handlers with `try`, `catch`, and `finally` (the latter are already included in vanilla cperl-mode thanks to Jonathan Rockway).
 
-I have not yet checked whether someone else is also working on the same topic, but I want to have something to show when I do.
+## Branches in this repository
+
+During the migration period to the Emacs repository we have three
+branches here, but the number will decrease in due time.
+
+ * The 'master' branch contains features which are best called
+   experimental: Support for new features and keyword-creating
+   modules.  There's quite a list which is already supported, among
+   them popular OO frameworks like
+   [Moo](https://metacpan.org/pod/Moo)/[Moose](https://metacpan.org/pod/Moo)
+   and [Zydeco](https://metacpan.org/pod/Zydeco) and widely used
+   modules for testing like
+   [Test::More](https://metacpan.org/pod/Test::More).
+ * The 'upstream' branch is a copy of `cperl-mode.el` from the master
+   branch of the [official repository of Gnu
+   Emacs](https://git.savannah.gnu.org/cgit/emacs.git).  It contains
+   about a dozen bug fixes which have not yet been distributed with
+   Emacs.
+ * The branch 'cperl-mode-emacs-26' was introduced because some
+   changes in the Emacs repository required Emacs 28.  Since
+   combatibility helpers have now been added to Gnu Emacs, _this
+   branch is now identical to the 'upstream' branch and therefore
+   obsolete._
 
 ## The Plan
 
@@ -43,16 +65,16 @@ file, which follows Emacs conventions for style and location.
 
 ## The Future
 
-Once this fork is considered sufficiently stable, it is intended to
-distribute it using the usual Emacs channels: One option is to make it
-the official version which ships with Emacs.  In that case, publishing
-it via [ELPA](https://elpa.gnu.org/) makes sense, to allow adjustments
-to new versions of Perl or new features on our own schedule.
-Alternatively, it could be published on [MELPA](https://melpa.org/),
-but in that case it should be renamed (the package, and _all_ the
-symbols within) to avoid confusion with the official package.
+Once the features in the master branch are considered sufficiently
+stable, it is intended to distribute it using the usual Emacs
+channels: One option is to make it the official version which ships
+with Emacs.  In that case, publishing it via
+[ELPA](https://elpa.gnu.org/) makes sense, to allow adjustments to new
+versions of Perl or new features on our own schedule.  Most likely a
+dual life of CPerl mode as a core part of Emacs _and_ an ELPA package
+will be the way to go.
 
-This repository might continue to exist for experimental stuff or
-for collecting feeedback from the Perl community: The Emacs mailing
-lists might have too much "noise" which isn't relevant for Perl
-programmers at all.
+This repository might continue to exist for experimental stuff or for
+collecting feedback from the Perl community: The Emacs mailing lists
+might have much "noise" which isn't relevant for Perl programmers at
+all.

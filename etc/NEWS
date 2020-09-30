@@ -82,6 +82,8 @@ Currently this works for the keywords of the following modules:
  - MooseX::Declare: That module is deprecated, but an excellent
    playground to prepare for Cor.
 
+ - Zydeco is an even richer OO framework than Moose.
+
  - Test::More comes with the Perl core, highlighting the imports
    makes counting test cases easier.
 
@@ -159,7 +161,10 @@ with libxml2 support, but this seems to be the case in Linux
 distributions and for the MS Windows version.
 
 At the time of this writing, a lot of the builtin documentation is
-either outdated or just broken, so there's still work to do.
+either outdated or just broken, so there's still work to do.  Also,
+the HTML formatting in published versions of Emacs as a downside that
+it doesn't distinguish between variable-pitch and fixed-pitch fonts,
+so some POD formatting is rendered invisible.
 
 **** New customization options: cperl-perldoc-program, cperl-pod2html-program
 
