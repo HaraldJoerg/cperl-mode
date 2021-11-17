@@ -13,6 +13,26 @@ attention over there (including mine).
 
 Issue reports or discussion here isn't lost, either.  If you send pull requests, please note that substantial contributions can only be included with Emacs if the authors transfer the copyright to the Free Software Foundation.
 
+## Installation Instructions
+
+CPerl mode is not (yet) available as an installable package.  A manual
+installation isn't that difficult, though: It consists of just one
+file, cperl-mode.el, and it can be used as a drop-in replacement for
+the cperl-mode.el which ships with Emacs.
+
+So, to use this version of cperl-mode.el, either clone this repository
+or just copy cperl-mode.el to a location of your choice, and then tell
+Emacs where to find it in your init file:
+
+  ```(add-to-list 'load-path "/your/directory/here")```
+
+Alternatively, you could use the "current" version from the Emacs
+source tree. [cperl-mode.el from the master
+branch](https://git.savannah.gnu.org/cgit/emacs.git/plain/lisp/progmodes/cperl-mode.el)
+works with Emacs 26.1 or newer.  This version (occasionally mirrored
+to the upstream branch in this repository) does not contain the
+experimental support for language extensions, but even more bug fixes.
+
 ## Motivation
 
 The Perl programming language is evolving, and so should cperl-mode.  Currently there's [Ovid's initiative](https://github.com/Ovid/Cor/wiki) to bring "native" object-oriented keywords into the Perl core.  We can't _run_ this code yet, but why shouldn't we be able to _write_ it with proper support by the editor?
@@ -31,7 +51,10 @@ branches here, but the number will decrease in due time.
    [Moo](https://metacpan.org/pod/Moo)/[Moose](https://metacpan.org/pod/Moo)
    and [Zydeco](https://metacpan.org/pod/Zydeco) and widely used
    modules for testing like
-   [Test::More](https://metacpan.org/pod/Test::More).
+   [Test::More](https://metacpan.org/pod/Test::More).  Unfortunately
+   the *implementation* of the extensions is a bit of a dead end and
+   needs some rework before it can make its way into the official
+   Emacs repository.
  * The 'upstream' branch is a copy of `cperl-mode.el` from the master
    branch of the [official repository of Gnu
    Emacs](https://git.savannah.gnu.org/cgit/emacs.git).  It contains
@@ -50,7 +73,8 @@ My first (unpublished) approach was a mode derived from cperl-mode, but this ran
  1. Factor out quite a lot of regular expression literals into variables
     * Doing so, use `regexp-opt` at runtime to make them easier to read (this is a FIXME anyway)
     * Also, reduce and stabilize the numbers of capture groups in the regular expressions
- 2. Build "feature sets" of keywords for try/catch, Moo(se), Cor, and maybe more
+ 2. Build "feature sets" of keywords for try/catch, Moo(se), Cor, and
+    maybe more.  These are intended to be made available as minor modes on top of CPerl mode.
  3. Stay compatible with cperl-mode's features, customization options and documentation methods
  4. Eliminate some workarounds for issues which no longer exist
 

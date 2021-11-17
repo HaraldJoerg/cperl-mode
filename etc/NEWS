@@ -1,6 +1,6 @@
 cperl-mode -- history of user-visible changes.
 
-Copyright (C) 2020-2020 to be clarified
+Copyright (C) 2020-2021 tFree Software Foundation, Inc.
 
 This file is about changes in cperl-mode version 7.0
 
@@ -65,6 +65,10 @@ under "New Features".
 
 This feature, in particular its activation and customization, are
 experimental and subject to change.
+
+In fact, they *will* change from the keyword-sets described below to
+minor modes which can be added either automatically (by heuristics) or
+manually with Emacs functions.
 
 **** New customization group: cperl-keyword-sets
 
@@ -161,10 +165,12 @@ with libxml2 support, but this seems to be the case in Linux
 distributions and for the MS Windows version.
 
 At the time of this writing, a lot of the builtin documentation is
-either outdated or just broken, so there's still work to do.  Also,
-the HTML formatting in published versions of Emacs as a downside that
-it doesn't distinguish between variable-pitch and fixed-pitch fonts,
-so some POD formatting is rendered invisible.
+either outdated or just broken, so there's still work to do.  As of
+Emacs 27, shr has improved to distinguish between code (using a
+fixed-width font) and text (using a variable-width font).
+
+This feature *might* end up as a separate package because it is
+equally useful for CPerl mode and Perl mode.
 
 **** New customization options: cperl-perldoc-program, cperl-pod2html-program
 
@@ -217,7 +223,7 @@ to do so.  I'll decide later whether I'll collect all the tests in one
 file.
 
 ----------------------------------------------------------------------
-This file is not (or: not yet) part of GNU Emacs.
+This file is not part of GNU Emacs.
 
 GNU Emacs is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
