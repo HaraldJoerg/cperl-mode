@@ -5044,7 +5044,7 @@ statement would start; thus the block in ${func()} does not count."
 		    ;; else {}     but not    else::func {}
 		    (or (and (looking-at
 			      (concat "\\(" cperl--named-block-regexp
-			      "\\|\\(else\\|catch\\|try\\|continue\\|grep\\|map\\)\\)\\>"))
+			      "\\|\\(else\\|catch\\|try\\|continue\\|finally\\|grep\\|map\\)\\)\\>"))
 			     (not (looking-at "\\(\\sw\\|_\\)+::")))
 			;; sub f {}   or package My::Package { }
 			(progn
