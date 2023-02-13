@@ -92,6 +92,7 @@
 	(concat msg ": ")))))
 
 (eval-when-compile (require 'cl-lib))
+(require 'facemenu)
 
 (defvar msb-menu-cond)
 (defvar gud-perldb-history)
@@ -241,7 +242,10 @@ Versions 5.2 ... 5.20 behaved as if this were nil."
   :group 'cperl-indentation-details)
 
 (defcustom cperl-indent-subs-specially t
-  "Non-nil means indent subs that are inside other blocks (hash values, for example) relative to the beginning of the \"sub\" keyword, rather than relative to the statement that contains the declaration."
+  "Non-nil means indent subs that are inside other blocks (hash
+values, for example) relative to the beginning of the \"sub\"
+keyword, rather than relative to the statement that contains the
+declaration."
   :type 'boolean
   :group 'cperl-indentation-details)
 
@@ -1371,7 +1375,7 @@ when it finds the modules which export them in the buffer's file."
 (defvar cperl-core-named-block-keywords
   '("BEGIN" "CHECK" "END" "INIT" "UNITCHECK")
   "These keywords introduce a block which ends a statement
-   without 'sub', and without a semicolon")
+   without \"sub\", and without a semicolon")
 
 (defvar cperl-core-special-sub-keywords
   '("AUTOLOAD" "DESTROY")
@@ -1457,6 +1461,7 @@ different keyword sets.")
 ;; regexps used in TAGS files are global
 (defvar cperl--tags-namespace-declare-regexp   nil)
 (defvar cperl--tags-sub-regexp                 nil)
+(defvar cperl-tags-hier-regexp-list            nil)
 
 (defun cperl-add-keyword-set (name keyword-set &optional regexp)
   "Define a new KEYWORD-SET to be applied if a buffer matches REGEXP.
@@ -1464,7 +1469,7 @@ A keyword set is a property list matching keyword categories to
 lists of keywords.
 
 Example:  (cperl-add-keyword-set \"use MooseX::Declare;\"
-                                 '(:namespace-declare (\"class\")
+                                 \=(:namespace-declare (\"class\")
                                    :sub (\"method\")
                                    :functions (\"has\" \"extends\")))
 
@@ -1611,6 +1616,45 @@ The initial value contains the keywords from the Perl core."
 (defvar-local cperl-imenu--function-name-regexp-perl nil)
 (defvar-local cperl-outline-regexp             nil)
 
+;; Is incorporated in `cperl-imenu--function-name-regexp-perl'
+;; `cperl-outline-regexp', `defun-prompt-regexp'.
+;; Details of groups in this may be used in several functions; see comments
+;; near mentioned above variable(s)...
+;; sub($$):lvalue{}  sub:lvalue{} Both allowed...
+(defsubst cperl-after-sub-regexp (named attr) ; 9 groups without attr...
+  "Match the text after `sub' in a subroutine declaration.
+If NAMED is nil, allows anonymous subroutines.  Matches up to the first \":\"
+of attributes (if present), or end of the name or prototype (whatever is
+the last)."
+  (concat				; Assume n groups before this...
+   "\\("				; n+1=name-group
+     cperl-white-and-comment-rex	; n+2=pre-name
+     "\\(::[a-zA-Z_0-9:']+\\|[a-zA-Z_'][a-zA-Z_0-9:']*\\)" ; n+3=name
+   "\\)"				; END n+1=name-group
+   (if named "" "?")
+   "\\("				; n+4=proto-group
+     cperl-maybe-white-and-comment-rex	; n+5=pre-proto
+     "\\(([^()]*)\\)"			; n+6=prototype
+   "\\)?"				; END n+4=proto-group
+   "\\("				; n+7=attr-group
+     cperl-maybe-white-and-comment-rex	; n+8=pre-attr
+     "\\("				; n+9=start-attr
+        ":"
+	(if attr (concat
+		  "\\("
+		     cperl-maybe-white-and-comment-rex ; whitespace-comments
+		     "\\(\\sw\\|_\\)+"	; attr-name
+		     ;; attr-arg (1 level of internal parens allowed!)
+		     "\\((\\(\\\\.\\|[^\\()]\\|([^\\()]*)\\)*)\\)?"
+		     "\\("		; optional : (XXX allows trailing???)
+		        cperl-maybe-white-and-comment-rex ; whitespace-comments
+		     ":\\)?"
+		  "\\)+")
+	  "[^:]")
+     "\\)"
+   "\\)?"				; END n+6=proto-group
+   ))
+
 (defun cperl-collect-keyword-regexps ()
   "Merge and collect buffer-local regexps.
 Merge all keyword lists to optimized regular expressions which
@@ -1682,44 +1726,6 @@ expressions which depend on these."
   (set (make-local-variable 'comment-column) cperl-comment-column)
   (set (make-local-variable 'comment-start-skip) "#+ *"))
 
-;; Is incorporated in `cperl-imenu--function-name-regexp-perl'
-;; `cperl-outline-regexp', `defun-prompt-regexp'.
-;; Details of groups in this may be used in several functions; see comments
-;; near mentioned above variable(s)...
-;; sub($$):lvalue{}  sub:lvalue{} Both allowed...
-(defsubst cperl-after-sub-regexp (named attr) ; 9 groups without attr...
-  "Match the text after `sub' in a subroutine declaration.
-If NAMED is nil, allows anonymous subroutines.  Matches up to the first \":\"
-of attributes (if present), or end of the name or prototype (whatever is
-the last)."
-  (concat				; Assume n groups before this...
-   "\\("				; n+1=name-group
-     cperl-white-and-comment-rex	; n+2=pre-name
-     "\\(::[a-zA-Z_0-9:']+\\|[a-zA-Z_'][a-zA-Z_0-9:']*\\)" ; n+3=name
-   "\\)"				; END n+1=name-group
-   (if named "" "?")
-   "\\("				; n+4=proto-group
-     cperl-maybe-white-and-comment-rex	; n+5=pre-proto
-     "\\(([^()]*)\\)"			; n+6=prototype
-   "\\)?"				; END n+4=proto-group
-   "\\("				; n+7=attr-group
-     cperl-maybe-white-and-comment-rex	; n+8=pre-attr
-     "\\("				; n+9=start-attr
-        ":"
-	(if attr (concat
-		  "\\("
-		     cperl-maybe-white-and-comment-rex ; whitespace-comments
-		     "\\(\\sw\\|_\\)+"	; attr-name
-		     ;; attr-arg (1 level of internal parens allowed!)
-		     "\\((\\(\\\\.\\|[^\\()]\\|([^\\()]*)\\)*)\\)?"
-		     "\\("		; optional : (XXX allows trailing???)
-		        cperl-maybe-white-and-comment-rex ; whitespace-comments
-		     ":\\)?"
-		  "\\)+")
-	  "[^:]")
-     "\\)"
-   "\\)?"				; END n+6=proto-group
-   ))
 
 ;; ;; Details of groups in this are used in `cperl-imenu--create-perl-index'
 ;; ;;  and `cperl-outline-level'.
@@ -2404,7 +2410,7 @@ Affected by `cperl-electric-parens'."
   "Insert a construction appropriate after a keyword.
 Help message may be switched off by setting `cperl-message-electric-keyword'
 to nil."
-  (let ((beg (point-at-bol))
+  (let ((beg (line-beginning-position))
 	(dollar (and (eq last-command-event ?$)
 		     (eq this-command 'self-insert-command)))
 	(delete (and (memq last-command-event '(?\s ?\n ?\t ?\f))
@@ -2547,7 +2553,7 @@ to nil."
   "Insert a construction appropriate after a keyword.
 Help message may be switched off by setting `cperl-message-electric-keyword'
 to nil."
-  (let ((beg (point-at-bol)))
+  (let ((beg (line-beginning-position)))
     (and (save-excursion
 	   (backward-sexp 1)
 	   (cperl-after-expr-p nil "{;:"))
@@ -2587,8 +2593,8 @@ to nil."
   "Go to end of line, open a new line and indent appropriately.
 If in POD, insert appropriate lines."
   (interactive)
-  (let ((beg (point-at-bol))
-	(end (point-at-eol))
+  (let ((beg (line-beginning-position))
+	(end (line-end-position))
 	(pos (point)) start over cut res)
     (if (and				; Check if we need to split:
 					; i.e., on a boundary and inside "{...}"
@@ -2666,8 +2672,8 @@ If in POD, insert appropriate lines."
 		   (forward-paragraph -1)
 		   (forward-word-strictly 1)
 		   (setq pos (point))
-		   (setq cut (buffer-substring (point) (point-at-eol)))
-		   (delete-char (- (point-at-eol) (point)))
+		   (setq cut (buffer-substring (point) (line-end-position)))
+		   (delete-char (- (line-end-position) (point)))
 		   (setq res (expand-abbrev))
 		   (save-excursion
 		     (goto-char pos)
@@ -3133,7 +3139,7 @@ Will not look before LIM."
 					(point-max)))) ; do not loop if no syntaxification
 				  ;; label:
 				  (t
-				   (setq colon-line-end (point-at-eol))
+				   (setq colon-line-end (line-end-position))
 				   (search-forward ":"))))
 			  ;; We are at beginning of code (NOT label or comment)
 			  ;; First, the following code counts
@@ -3176,7 +3182,7 @@ Will not look before LIM."
 				    (looking-at (concat cperl--sub-regexp "\\>"))))
 			     (setq p (nth 1 ; start of innermost containing list
 					  (parse-partial-sexp
-					   (point-at-bol)
+					   (line-beginning-position)
 					   (point)))))
 			    (progn
 			      (goto-char (1+ p)) ; enclosing block on the same line
@@ -3415,7 +3421,7 @@ the current line is to be regarded as part of a block comment."
 Returns true if comment is found.  In POD will not move the point."
   ;; If the line is inside other syntax groups (qq-style strings, HERE-docs)
   ;; then looks for literal # or end-of-line.
-  (let (state stop-in cpoint (lim (point-at-eol)) pr e)
+  (let (state stop-in cpoint (lim (line-end-position)) pr e)
     (or cperl-font-locking
 	(cperl-update-syntaxification lim lim))
     (beginning-of-line)
@@ -4228,7 +4234,7 @@ the sections using `cperl-pod-head-face', `cperl-pod-face',
 			     "")
 		      tb (match-beginning 0))
 		(setq argument nil)
-		(put-text-property (point-at-bol) b 'first-format-line 't)
+		(put-text-property (line-beginning-position) b 'first-format-line 't)
 		(if cperl-pod-here-fontify
 		    (while (and (eq (forward-line) 0)
 				(not (looking-at "^[.;]$")))
@@ -5183,7 +5189,7 @@ If `cperl-indent-region-fix-constructs', will improve spacing on
 conditional/loop constructs."
   (interactive)
   (save-excursion
-    (let ((tmp-end (point-at-eol)) top done)
+    (let ((tmp-end (line-end-position)) top done)
       (save-excursion
 	(beginning-of-line)
 	(while (null done)
@@ -5231,9 +5237,9 @@ conditional/loop constructs."
 			   "\\<\\(else\\|elsif\\|continue\\)\\>"))
 		  (progn
 		    (goto-char (match-end 0))
-		    (setq tmp-end (point-at-eol)))
+		    (setq tmp-end (line-end-position)))
 		(setq done t))))
-	  (setq tmp-end (point-at-eol)))
+	  (setq tmp-end (line-end-position)))
 	(goto-char tmp-end)
 	(setq tmp-end (point-marker)))
       (if cperl-indent-region-fix-constructs
@@ -5246,7 +5252,7 @@ Returns some position at the last line."
   (interactive)
   (or end
       (setq end (point-max)))
-  (let ((ee (point-at-eol))
+  (let ((ee (line-end-position))
 	(cperl-indent-region-fix-constructs
 	 (or cperl-indent-region-fix-constructs 1))
 	p pp ml have-brace ret)
@@ -5415,7 +5421,7 @@ Returns some position at the last line."
                                 (if (cperl-indent-line parse-data)
                                     (setq ret (cperl-fix-line-spacing end parse-data)))))))))))
         (beginning-of-line)
-        (setq p (point) pp (point-at-eol)) ; May be different from ee.
+        (setq p (point) pp (line-end-position)) ; May be different from ee.
         ;; Now check whether there is a hanging `}'
         ;; Looking at:
         ;; } blah
@@ -6905,7 +6911,7 @@ Does not move point."
 (defun cperl-add-tags-recurse-noxs ()
   "Add to TAGS data for \"pure\" Perl files in the current directory and kids.
 Use as
-  emacs -batch -q -no-site-file -l emacs/cperl-mode.el \
+  emacs -batch -q -no-site-file -l emacs/cperl-mode.el \\
         -f cperl-add-tags-recurse-noxs
 "
   (cperl-write-tags nil nil t t nil t))
@@ -6914,7 +6920,7 @@ Use as
   "Add to TAGS data for \"pure\" Perl in the current directory and kids.
 Writes down fullpath, so TAGS is relocatable (but if the build directory
 is relocated, the file TAGS inside it breaks). Use as
-  emacs -batch -q -no-site-file -l emacs/cperl-mode.el \
+  emacs -batch -q -no-site-file -l emacs/cperl-mode.el \\
         -f cperl-add-tags-recurse-noxs-fullpath
 "
   (cperl-write-tags nil nil t t nil t ""))
@@ -6922,7 +6928,7 @@ is relocated, the file TAGS inside it breaks). Use as
 (defun cperl-add-tags-recurse ()
   "Add to TAGS file data for Perl files in the current directory and kids.
 Use as
-  emacs -batch -q -no-site-file -l emacs/cperl-mode.el \
+  emacs -batch -q -no-site-file -l emacs/cperl-mode.el \\
         -f cperl-add-tags-recurse
 "
   (cperl-write-tags nil nil t t))
@@ -7072,9 +7078,9 @@ One may build such TAGS files from CPerl mode menu."
 				 (or (nthcdr 2 elt)
 				     ;; Only in one file
 				     (setcdr elt (cdr (nth 1 elt)))))))
-	    to l1 l2 l3)
+	    to) ;; l1 l2 l3)
 	;; (setq cperl-hierarchy '(() () ())) ; Would write into '() later!
-	(setq cperl-hierarchy (list l1 l2 l3))
+	(setq cperl-hierarchy (list () () ())) ;; (list l1 l2 l3)
 	(or tags-table-list
 	    (call-interactively 'visit-tags-table))
 	(mapc
@@ -7123,7 +7129,7 @@ One may build such TAGS files from CPerl mode menu."
 			 "\\)\\(::\\)?"))
 	 (packages (cdr (nth 1 to)))
 	 (methods (cdr (nth 2 to)))
-	 l1 head cons1 cons2 ord writeto recurse
+	 head cons1 cons2 ord writeto recurse
 	 root-packages root-functions
 	 (move-deeper
 	  (function
@@ -7144,7 +7150,7 @@ One may build such TAGS files from CPerl mode menu."
 		    (setq root-functions (cons elt root-functions)))
 		   (t
 		    (setq root-packages (cons elt root-packages))))))))
-    (setcdr to l1)			; Init to dynamic space
+    (setcdr to nil)			; Init to dynamic space
     (setq writeto to)
     (setq ord 1)
     (mapc move-deeper packages)
@@ -7351,7 +7357,7 @@ Currently it is tuned to C and Perl syntax."
   ;; Get to the something meaningful
   (or (eobp) (eolp) (forward-char 1))
   (re-search-backward "[-a-zA-Z0-9_:!&*+,./<=>?\\^|~$%@]"
-		      (point-at-bol)
+		      (line-beginning-position)
 		      'to-beg)
   ;;  (cond
   ;;   ((or (eobp) (looking-at "[][ \t\n{}();,]")) ; Not at a symbol
@@ -8632,7 +8638,7 @@ which seem to work, at least, with some formatters."
 
 ;;;###autoload
 (defun cperl-perldoc (word &optional section)
-  "Run the shell command 'perldoc' on WORD, on Win32 platforms."
+  "Run the shell command `perldoc' on WORD, on Win32 platforms."
   (interactive
    (let* ((default (cperl-word-at-point))
 	 (read (read-string
@@ -9023,12 +9029,7 @@ do extra unwind via `cperl-unwind-to-safe'."
   ;; (message "Syntaxifying...")
   (let ((dbg (point)) (iend end) (idone cperl-syntax-done-to)
 	(istate (car cperl-syntax-state))
-	start from-start edebug-backtrace-buffer)
-    (if (eq cperl-syntaxify-by-font-lock 'backtrace)
-	(progn
-	  (require 'edebug)
-	  (let ((f 'edebug-backtrace))
-	    (funcall f))))	; Avoid compile-time warning
+	start from-start)
     (or cperl-syntax-done-to
 	(setq cperl-syntax-done-to (point-min)
 	      from-start t))
