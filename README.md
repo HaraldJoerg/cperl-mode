@@ -59,7 +59,8 @@ branches here, but the number will decrease in due time.
    branch of the [official repository of Gnu
    Emacs](https://git.savannah.gnu.org/cgit/emacs.git).  It contains
    about a dozen bug fixes which have not yet been distributed with
-   Emacs.
+   Emacs.  This version now covers Perl syntax up to version 5.38
+   (in particular, the feature 'class' stuff).
  * The branch 'cperl-mode-emacs-26' was introduced because some
    changes in the Emacs repository required Emacs 28.  Since
    combatibility helpers have now been added to Gnu Emacs, _this
