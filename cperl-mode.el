@@ -5979,7 +5979,8 @@ functions (which they are not).  Inherits from `default'.")
 	     (concat
 	      "\\(^\\|[^$@%&\\]\\)\\<\\("
               (regexp-opt
-               '("CORE" "__FILE__" "__LINE__" "__SUB__" "__PACKAGE__"
+               '("CORE"
+                 "__FILE__" "__LINE__" "__SUB__" "__PACKAGE__" "__CLASS__"
                  "abs" "accept" "alarm" "and" "atan2"
                  "bind" "binmode" "bless" "caller"
                  "chdir" "chmod" "chown" "chr" "chroot" "close"
