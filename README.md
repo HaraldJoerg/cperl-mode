@@ -61,11 +61,8 @@ branches here, but the number will decrease in due time.
    about a dozen bug fixes which have not yet been distributed with
    Emacs.  This version now covers Perl syntax up to version 5.38
    (in particular, the feature 'class' stuff).
- * The branch 'cperl-mode-emacs-26' was introduced because some
-   changes in the Emacs repository required Emacs 28.  Since
-   combatibility helpers have now been added to Gnu Emacs, _this
-   branch is now identical to the 'upstream' branch and therefore
-   obsolete._
+ * The branch perl5.39 will be used to develop and test support
+   for Perl syntax of Perl 5.39/5.40.
 
 ## The Plan
 
