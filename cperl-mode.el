@@ -1547,7 +1547,7 @@ keyword lists."
 
 (defun cperl-activate-keyword-set (name)
   "Enable handling of keywords for keyword set NAME."
-  (interactive (list (intern-soft (completing-read "Acactivate keyword set: "
+  (interactive (list (intern-soft (completing-read "Activate keyword set: "
                                       cperl-inactive-keyword-sets))))
   (setq cperl-deactivated-keyword-sets
 	(delq name cperl-deactivated-keyword-sets))
