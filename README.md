@@ -56,3 +56,9 @@ This repository might continue to exist for experimental stuff or
 for collecting feeedback from the Perl community: The Emacs mailing
 lists might have too much "noise" which isn't relevant for Perl
 programmers at all.
+
+## Copyright
+
+As by Emacs conventions, copyright for this branch of cperl-mode.el
+has been passed to the Free Software Foundation.  This version will be
+distributed with a future version of Emacs.
