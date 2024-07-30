@@ -161,13 +161,13 @@ for constructs with multiline if/unless/while/until/for/foreach condition."
   :group 'cperl-autoinsert-details)
 
 (defcustom cperl-file-style nil
-  "Indentation style to use in cperl-mode.
+  "Indentation style to use in `cperl-mode'.
 Setting this option will override options as given in
 `cperl-style-alist' for the keyword provided here.  If nil, then
 the individual options as customized are used.
 \"PBP\" is the style recommended in the Book \"Perl Best
 Practices\" by Damian Conway.  \"CPerl\" is the traditional style
-of cperl-mode, and \"PerlStyle\" follows the Perl documentation
+of `cperl-mode', and \"PerlStyle\" follows the Perl documentation
 in perlstyle.  The other styles have been developed for other
 programming languages, mostly C."
   :type '(choice (const "PBP")
@@ -232,7 +232,7 @@ to the right of the start of its line."
   :group 'cperl-indentation-details)
 (defcustom cperl-continued-brace-offset 0
   "Extra indent for substatements that start with open-braces.
-This is in addition to cperl-continued-statement-offset."
+This is in addition to `cperl-continued-statement-offset'."
   :type 'integer
   :group 'cperl-indentation-details)
 (defcustom cperl-close-paren-offset -1
@@ -819,7 +819,7 @@ B) Speed of editing operations.
     of, say, long POD sections.")
 
 (defvar cperl-tips-faces 'please-ignore-this-line
-  "CPerl mode uses following faces for highlighting:
+  "CPerl mode uses the following faces for highlighting:
 
   `cperl-array-face'			Array names
   `cperl-hash-face'			Hash names
@@ -1392,7 +1392,7 @@ Contains three groups for the initial keyword \"package\" or
   (defconst cperl--package-for-imenu-rx
     `(sequence symbol-start
                (group-n 1 "package")
-               ,cperl--ws*-rx
+               ,cperl--ws+-rx
                (group-n 2 ,cperl--normal-identifier-rx)
                (optional (sequence ,cperl--ws+-rx
                                    (regexp ,cperl--version-regexp)))
@@ -1408,9 +1408,9 @@ name, and one for the discovery of a following BLOCK.")
   ;; (e.g. ":isa(Parent)") while packages don't.  We skip over it, but
   ;; like for "package" we capture the following ";" or "{".
   (defconst cperl--class-for-imenu-rx
-    `(sequence symbol-start
+    `(sequence (or space line-start)
                (group-n 1 "class")
-               ,cperl--ws*-rx
+               ,cperl--ws+-rx
                (group-n 2 ,cperl--normal-identifier-rx)
                (optional (sequence ,cperl--ws+-rx
                                    (regexp ,cperl--version-regexp)))
@@ -3384,9 +3384,8 @@ fontified.  Do nothing if BEGIN and END are equal.  If
 			                 ( ?\[ . ?\] )
 			                 ( ?\{ . ?\} )
 			                 ( ?\< . ?\> )))
-;; -------- The following definition is generated code from the "perlop"
-;; documentation with one minor change: The offending U+0706/U+0707 has
-;; not been added: see https://github.com/Perl/perl5/issues/22228
+;; -------- The following definition is generated code from  "perlop"
+;; https://metacpan.org/release/HAARG/perl-5.40.0/view/pod/perlop.pod
 (defvar cperl--extra-paired-delimiters '(( ?\N{U+0028} . ?\N{U+0029} )
                                          ( ?\N{U+003C} . ?\N{U+003E} )
                                          ( ?\N{U+005B} . ?\N{U+005D} )
@@ -3684,12 +3683,12 @@ fontified.  Do nothing if BEGIN and END are equal.  If
                                          ( ?\N{U+1F8AB} . ?\N{U+1F8AA} ))
   "Full list of paired delimiters for quote-like constructs.
 As an experimental feature, Perl uses these under \"feature
-\='extra_paired_delimiters\='\" or in feature bundles of Perl 5.40 or
+\\='extra_paired_delimiters\\='\" or in feature bundles of Perl 5.40 or
 newer.  To activate the extra delimiters, switch on the minor mode
 `cperl-extra-paired-delimiters-mode'.  This is also available from the
 \"Perl\" menu in section \"Toggle...\".
 The character pairs available are:
-(), <>, [], {}, «», »«, ༺༻, ༼༽, ᚛᚜, ‘’, ’‘, “”, ”“, ‵′, ‶″, ‷‴, ‹›, ›‹, ⁅⁆,
+(), <>, [], {}, «», »«, ༺༻, ༼༽, ᚛᚜, \\=‘\\=’, \\=’\\=‘, \\=“\\=”, \\=”\\=“, \\=‵\\=′, \\=‶\\=″, \\=‷\\=‴, ‹›, ›‹, ⁅⁆,
 ⁍⁌, ⁽⁾, ₍₎, →←, ↛↚, ↝↜, ↠↞, ↣↢, ↦↤, ↪↩, ↬↫, ↱↰, ↳↲, ⇀↼, ⇁↽, ⇉⇇, ⇏⇍, ⇒⇐, ⇛⇚,
 ⇝⇜, ⇢⇠, ⇥⇤, ⇨⇦, ⇴⬰, ⇶⬱, ⇸⇷, ⇻⇺, ⇾⇽, ∈∋, ∉∌, ∊∍, ≤≥, ≦≧, ≨≩, ≪≫, ≮≯, ≰≱, ≲≳,
 ≴≵, ≺≻, ≼≽, ≾≿, ⊀⊁, ⊂⊃, ⊄⊅, ⊆⊇, ⊈⊉, ⊊⊋, ⊣⊢, ⊦⫞, ⊨⫤, ⊩⫣, ⊰⊱, ⋐⋑, ⋖⋗, ⋘⋙, ⋜⋝,
@@ -4652,7 +4651,7 @@ recursive calls in starting lines of here-documents."
 				    (and (eq (preceding-char) ?\})
 					 (cperl-after-block-p (point-min)))
 				    (and (eq (char-syntax (preceding-char)) ?w)
-					 (progn
+					 (save-excursion
 					   (forward-sexp -1)
                                            ;; After these keywords `/'
                                            ;; starts a RE.  One should
@@ -6396,7 +6395,7 @@ functions (which they are not).  Inherits from `default'.")
             ;; -------- various stuff calling for a package name
             ;; (matcher (subexp facespec) (subexp facespec))
             `(,(rx (sequence
-                    (or (sequence symbol-start
+                    (or (sequence (or line-start space "{" )
                                   (or "package" "require" "use" "import"
                                       "no" "bootstrap" "class")
                                   (eval cperl--ws+-rx))
@@ -6520,7 +6519,11 @@ functions (which they are not).  Inherits from `default'.")
                    (progn
                      (goto-char (match-beginning 2))
                      (match-end 2))
-                 (point))
+                 ;; If there's no attribute list in match 2, set a short
+                 ;; limit to the search for the anchored matcher,
+                 ;; otherwise it might interpret stuff from the
+                 ;; initializer expression as attribute.
+                 (1+ (point)))
                nil
                (1 font-lock-constant-face)
                (2 font-lock-string-face nil t) ; lax match, value is optional
