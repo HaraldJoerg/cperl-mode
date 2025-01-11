@@ -1,8 +1,7 @@
 # cperl-mode
 Bring new language features and popular DSLs into cperl-mode
 
-cperl-mode, created by Bob Olson and then enhanced and made popular by Ilya Zakharevich in the previous century, is the most popular major mode for editing Perl code with [Gnu Emacs](https://www.gnu.org/software/emacs/).  A version of cperl-mode is included with Emacs.
-However, recent and upcoming enhancements of Perl are not (yet) included.
+cperl-mode, created by Bob Olson and then enhanced and made popular by Ilya Zakharevich in the previous century, is the most popular major mode for editing Perl code with [Gnu Emacs](https://www.gnu.org/software/emacs/).  The version of cperl-mode which is included with Emacs gets regular updates to keep track of new Perl syntax: The upcoming version (Emacs 30) supports Perl versions up to 5.40, so in particular the "class" feature.  The "hot" version [cperl-mode.el from the master branch](https://git.savannah.gnu.org/cgit/emacs.git/plain/lisp/progmodes/cperl-mode.el) works with Emacs 27 or newer.
 
 The starting point for this repository is cperl-mode.el from the Gnu [Git repository](https://savannah.gnu.org/git/?group=emacs) as of 2020-06-04, which includes [Jonathan Rockway's additions](https://github.com/jrockway/cperl-mode).
 
@@ -26,10 +25,10 @@ Emacs where to find it in your init file:
 
   ```(add-to-list 'load-path "/your/directory/here")```
 
-Alternatively, you could use the "current" version from the Emacs
+Even better: you can use the "current" version from the Emacs
 source tree. [cperl-mode.el from the master
 branch](https://git.savannah.gnu.org/cgit/emacs.git/plain/lisp/progmodes/cperl-mode.el)
-works with Emacs 26.1 or newer.  This version (occasionally mirrored
+works with Emacs 27.1 or newer.  This version (occasionally mirrored
 to the upstream branch in this repository) does not contain the
 experimental support for language extensions, but even more bug fixes.
 
