@@ -1,4 +1,3 @@
-
 ;;; perl-tidy-ediff.el --- Compare sources with perltidy results   -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2021 Harald Jörg <haj@posteo.de>
@@ -20,6 +19,7 @@
 ;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Code:
+(require 'ediff)
 
 
 ;;; In place of a manual....
