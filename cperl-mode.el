@@ -1126,6 +1126,12 @@ versions of Emacs."
 (defvar cperl-menu)
 (defvar cperl-lazy-installed)
 (defvar cperl-old-style nil)
+(defvar cperl-current-style-name nil
+  "Name of the currently used indentation styles.
+This is a list.  The first entry is the name of the currently used style.
+Others correspond to previously used styles.
+The `cperl-set-style' pushes new values, `cperl-set-style-back' pop values.")
+
 (condition-case nil
     (progn
       (require 'easymenu)
@@ -1274,7 +1280,8 @@ versions of Emacs."
 	  ["BSD" (cperl-set-style "BSD") t]
 	  ["Whitesmith" (cperl-set-style "Whitesmith") t]
 	  ["Memorize Current" (cperl-set-style "Current") t]
-	  ["Memorized" (cperl-set-style-back) cperl-old-style])
+	  ["Previous" (cperl-set-style-back) (or cperl-old-style
+                                             cperl-current-style-name)])
 	 ("Micro-docs"
 	  ["Tips" (describe-variable 'cperl-tips) t]
 	  ["Problems" (describe-variable 'cperl-problems) t]
@@ -6333,6 +6340,13 @@ Should be used via `cperl-set-style' or via Perl menu.
 
 See examples in `cperl-style-examples'.")
 
+(defun cperl--set-style-vars (style)
+  "Set all Cperl mode variables to the specified STYLE."
+  (let ((style (cdr (assoc style cperl-style-alist))) setting)
+    (while style
+      (setq setting (car style) style (cdr style))
+      (set (car setting) (cdr setting)))))
+
 (defun cperl-set-style (style)
   "Set CPerl mode variables to use one of several different indentation styles.
 The arguments are a string representing the desired style.
@@ -6342,31 +6356,49 @@ and \"Whitesmith\".
 
 The current value of style is memorized (unless there is a memorized
 data already), may be restored by `cperl-set-style-back'.
+The name of the style (if any) is also pushed on `cperl-current-style-name'.
 
 Choosing \"Current\" style will not change style, so this may be used for
-side-effect of memorizing only.  Examples in `cperl-style-examples'."
+side-effect of memorizing only.  Examples in `cperl-style-examples'.
+In that case if `cperl-current-style-name' holds a value, that value is pushed
+into it instead of \"Current\"."
   (interactive
    (list (completing-read "Enter style: " cperl-style-alist nil 'insist)))
-  (or cperl-old-style
-      (setq cperl-old-style
-	    (mapcar (function
-		     (lambda (name)
-		       (cons name (eval name))))
-		    cperl-styles-entries)))
-  (let ((style (cdr (assoc style cperl-style-alist))) setting)
-    (while style
-      (setq setting (car style) style (cdr style))
-      (set (car setting) (cdr setting)))))
+  (when style
+    (when (and (string-equal style "Current")
+               cperl-current-style-name)
+      (setq style (car cperl-current-style-name)))
+    (push style cperl-current-style-name))
+  ;; When setting "current" style, remember it in `cperl-old-style' by pushing
+  ;; a alist of style controlling name/variables onto it.
+  ;; Otherwise don't as `cperl-set-style-back' would restore it by name.
+  (when (string-equal style "Current")
+    (let ((old-style (mapcar (function
+		                      (lambda (name)
+		                        (cons name (eval name))))
+		                     cperl-styles-entries)))
+      (push old-style cperl-old-style)))
+  (cperl--set-style-vars style))
 
 (defun cperl-set-style-back ()
   "Restore a style memorized by `cperl-set-style'."
   (interactive)
-  (or cperl-old-style (error "The style was not changed"))
-  (let (setting)
-    (while cperl-old-style
-      (setq setting (car cperl-old-style)
-	    cperl-old-style (cdr cperl-old-style))
-      (set (car setting) (cdr setting)))))
+  (or cperl-old-style cperl-current-style-name
+      (error "The style was not changed"))
+  ;; discard current style and act on what was discarded
+  (let ((style (pop cperl-current-style-name)))
+    (when style
+      (if (string-equal style "Current")
+          ;; restore the style from `cperl-old-style' which is
+          ;; a stack of current styles.
+          (let ((old-style (pop cperl-old-style))
+                (setting))
+            (while old-style
+              (setq setting (car old-style)
+	                old-style (cdr old-style))
+              (set (car setting) (cdr setting))))
+        ;; a named style was previously used, restore it by name
+        (cperl--set-style-vars style)))))
 
 (defvar perl-dbg-flags)
 (defun cperl-check-syntax ()
