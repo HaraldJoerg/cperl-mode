@@ -6252,86 +6252,86 @@ else
 
 (defconst cperl-style-alist
   '(("CPerl" ;; =GNU - extra-newline-before-brace + cperl-merge-trailing-else
-     (cperl-indent-level               .  2)
      (cperl-brace-offset               .  0)
      (cperl-continued-brace-offset     .  0)
-     (cperl-label-offset               . -2)
      (cperl-continued-statement-offset .  2)
      (cperl-extra-newline-before-brace .  nil)
      (cperl-extra-newline-before-brace-multiline .  nil)
+     (cperl-indent-level               .  2)
+     (cperl-label-offset               . -2)
      (cperl-merge-trailing-else	       .  t))
 
     ("PBP"  ;; Perl Best Practices by Damian Conway
-     (cperl-indent-level               .  4)
      (cperl-brace-offset               .  0)
      (cperl-continued-brace-offset     .  0)
-     (cperl-label-offset               . -2)
      (cperl-continued-statement-offset .  4)
      (cperl-extra-newline-before-brace .  nil)
      (cperl-extra-newline-before-brace-multiline .  nil)
-     (cperl-merge-trailing-else        .  nil)
+     (cperl-indent-level               .  4)
      (cperl-indent-parens-as-block     .  t)
+     (cperl-label-offset               . -2)
+     (cperl-merge-trailing-else        .  nil)
      (cperl-tab-always-indent          .  t))
 
     ("PerlStyle"			; CPerl with 4 as indent
-     (cperl-indent-level               .  4)
      (cperl-brace-offset               .  0)
      (cperl-continued-brace-offset     .  0)
-     (cperl-label-offset               . -4)
      (cperl-continued-statement-offset .  4)
      (cperl-extra-newline-before-brace .  nil)
      (cperl-extra-newline-before-brace-multiline .  nil)
+     (cperl-indent-level               .  4)
+     (cperl-label-offset               . -4)
      (cperl-merge-trailing-else	       .  t))
 
     ("GNU"
-     (cperl-indent-level               .  2)
      (cperl-brace-offset               .  0)
      (cperl-continued-brace-offset     .  0)
-     (cperl-label-offset               . -2)
      (cperl-continued-statement-offset .  2)
      (cperl-extra-newline-before-brace .  t)
      (cperl-extra-newline-before-brace-multiline .  t)
+     (cperl-indent-level               .  2)
+     (cperl-label-offset               . -2)
      (cperl-merge-trailing-else	       .  nil))
 
     ("K&R"
-     (cperl-indent-level               .  5)
      (cperl-brace-offset               .  0)
      (cperl-continued-brace-offset     . -5)
-     (cperl-label-offset               . -5)
      (cperl-continued-statement-offset .  5)
-     ;;(cperl-extra-newline-before-brace .  nil) ; ???
-     ;;(cperl-extra-newline-before-brace-multiline .  nil)
+     ;; (cperl-extra-newline-before-brace .  nil) ; ???
+     ;; (cperl-extra-newline-before-brace-multiline .  nil)
+     (cperl-indent-level               .  5)
+     (cperl-label-offset               . -5)
      (cperl-merge-trailing-else	       .  nil))
 
     ("BSD"
-     (cperl-indent-level               .  4)
      (cperl-brace-offset               .  0)
      (cperl-continued-brace-offset     . -4)
-     (cperl-label-offset               . -4)
      (cperl-continued-statement-offset .  4)
-     ;;(cperl-extra-newline-before-brace .  nil) ; ???
+     (cperl-extra-newline-before-brace .  t) ; ???
      ;;(cperl-extra-newline-before-brace-multiline .  nil)
+     (cperl-indent-level               .  4)
+     (cperl-label-offset               . -4)
      ;;(cperl-merge-trailing-else	       .  nil) ; ???
      )
 
     ("C++"
-     (cperl-indent-level               .  4)
      (cperl-brace-offset               .  0)
      (cperl-continued-brace-offset     . -4)
-     (cperl-label-offset               . -4)
      (cperl-continued-statement-offset .  4)
      (cperl-extra-newline-before-brace .  t)
      (cperl-extra-newline-before-brace-multiline .  t)
+     (cperl-indent-level               .  4)
+     (cperl-label-offset               . -4)
      (cperl-merge-trailing-else	       .  nil))
 
     ("Whitesmith"
-     (cperl-indent-level               .  4)
      (cperl-brace-offset               .  0)
      (cperl-continued-brace-offset     .  0)
-     (cperl-label-offset               . -4)
      (cperl-continued-statement-offset .  4)
      ;;(cperl-extra-newline-before-brace .  nil) ; ???
      ;;(cperl-extra-newline-before-brace-multiline .  nil)
+     (cperl-indent-level               .  4)
+     (cperl-label-offset               . -4)
      ;;(cperl-merge-trailing-else	       .  nil) ; ???
      )
     ("Current"))
