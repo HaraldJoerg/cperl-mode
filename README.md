@@ -1,7 +1,19 @@
 # cperl-mode
 Bring new language features and popular DSLs into cperl-mode
 
-cperl-mode, created by Bob Olson and then enhanced and made popular by Ilya Zakharevich in the previous century, is the most popular major mode for editing Perl code with [Gnu Emacs](https://www.gnu.org/software/emacs/).  The version of cperl-mode which is included with Emacs gets regular updates to keep track of new Perl syntax: The upcoming version (Emacs 30) supports Perl versions up to 5.40, so in particular the "class" feature.  The "hot" version [cperl-mode.el from the master branch](https://git.savannah.gnu.org/cgit/emacs.git/plain/lisp/progmodes/cperl-mode.el) works with Emacs 27 or newer.
+## News 2026-01-26
+
+I notice that I have neglected this file for too long.  I removed some
+content which I do no longer consider helpful.
+
+As of now, I maintain cperl-mode in the official Emacs repository: I
+am happy that the Emacs folks trust me on this.  This repository is
+for experiments and immature stuff, so for example there's a branch perl5.44 which is supposed to keep track of the changes in Perl 5.44.
+
+## Overview
+
+cperl-mode, created by Bob Olson and then enhanced and made popular by Ilya Zakharevich in the previous century, is the most popular major mode for editing Perl code with [Gnu Emacs](https://www.gnu.org/software/emacs/).  A version of cperl-mode is included with Emacs.
+However, recent and upcoming enhancements of Perl are not (yet) included.
 
 The starting point for this repository is cperl-mode.el from the Gnu [Git repository](https://savannah.gnu.org/git/?group=emacs) as of 2020-06-04, which includes [Jonathan Rockway's additions](https://github.com/jrockway/cperl-mode).
 
@@ -38,64 +50,9 @@ The Perl programming language is evolving, and so should cperl-mode.  Currently 
 
 Also, many popular modules import subroutines into your source code which behave like keywords, though technically they are just plain subroutines.  Yet, I'd love to read such source code with highlighting of these keywords.  Examples for such modules are OO-frameworks like Moose et al. with "keywords" like `has` and `extends`, test frameworks with `is`, `is_deeply` and many others, Plack with `builder`, `enable`  and `mount`, and various exception handlers with `try`, `catch`, and `finally` (the latter are already included in vanilla cperl-mode thanks to Jonathan Rockway).
 
-## Branches in this repository
-
-During the migration period to the Emacs repository we have three
-branches here, but the number will decrease in due time.
-
- * The 'master' branch contains features which are best called
-   experimental: Support for new features and keyword-creating
-   modules.  There's quite a list which is already supported, among
-   them popular OO frameworks like
-   [Moo](https://metacpan.org/pod/Moo)/[Moose](https://metacpan.org/pod/Moo)
-   and [Zydeco](https://metacpan.org/pod/Zydeco) and widely used
-   modules for testing like
-   [Test::More](https://metacpan.org/pod/Test::More).  Unfortunately
-   the *implementation* of the extensions is a bit of a dead end and
-   needs some rework before it can make its way into the official
-   Emacs repository.
- * The 'upstream' branch is a copy of `cperl-mode.el` from the master
-   branch of the [official repository of Gnu
-   Emacs](https://git.savannah.gnu.org/cgit/emacs.git).  It contains
-   about a dozen bug fixes which have not yet been distributed with
-   Emacs.  This version now covers Perl syntax up to version 5.38
-   (in particular, the feature 'class' stuff).
- * The branch perl5.39 will be used to develop and test support
-   for Perl syntax of Perl 5.39/5.40.
-
-## The Plan
-
-My first (unpublished) approach was a mode derived from cperl-mode, but this ran into too many issues with the current code of cperl-mode, so I decided to dig deeper and start refactoring.  I plan to:
-
- 1. Factor out quite a lot of regular expression literals into variables
-    * Doing so, use `regexp-opt` at runtime to make them easier to read (this is a FIXME anyway)
-    * Also, reduce and stabilize the numbers of capture groups in the regular expressions
- 2. Build "feature sets" of keywords for try/catch, Moo(se), Cor, and
-    maybe more.  These are intended to be made available as minor modes on top of CPerl mode.
- 3. Stay compatible with cperl-mode's features, customization options and documentation methods
- 4. Eliminate some workarounds for issues which no longer exist
-
-As an effect, I expect this version to be _slower_ than the original, but I don't think this is an issue in 2020.
-Also, I expect to make slow progress, as I'm doing this in my spare time.
-
 ## Status
 
-The current status is reported in the
-[NEWS](https://github.com/HaraldJoerg/cperl-mode/blob/master/etc/NEWS)
-file, which follows Emacs conventions for style and location.
+A new branch 'perl5.44' offers support for the upcoming Perl version
+5.44.  Right now, the only new feature is the support for named
+signatures.
 
-## The Future
-
-Once the features in the master branch are considered sufficiently
-stable, it is intended to distribute it using the usual Emacs
-channels: One option is to make it the official version which ships
-with Emacs.  In that case, publishing it via
-[ELPA](https://elpa.gnu.org/) makes sense, to allow adjustments to new
-versions of Perl or new features on our own schedule.  Most likely a
-dual life of CPerl mode as a core part of Emacs _and_ an ELPA package
-will be the way to go.
-
-This repository might continue to exist for experimental stuff or for
-collecting feedback from the Perl community: The Emacs mailing lists
-might have much "noise" which isn't relevant for Perl programmers at
-all.
