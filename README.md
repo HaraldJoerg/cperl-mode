@@ -1,17 +1,19 @@
 # cperl-mode
 Bring new language features and popular DSLs into cperl-mode
 
-cperl-mode, created by Bob Olson and then enhanced and made popular by Ilya Zakharevich in the previous century, is the most popular major mode for editing Perl code with [Gnu Emacs](https://www.gnu.org/software/emacs/).  A version of cperl-mode is included with Emacs.
-However, recent and upcoming enhancements of Perl are not (yet) included.
+CPerl mode, created by Bob Olson and then enhanced and made popular by
+Ilya Zakharevich in the previous century, is the most popular major
+mode for editing Perl code with
+[Gnu Emacs](https://www.gnu.org/software/emacs/).
 
-As of August 2026, cperl-mode is available as a
+CPerl mode is part of GNU Emacs.  As of August 2026, CPerl mode is
+also available as a
 [GNU ELPA package](https://elpa.gnu.org/packages/cperl-mode.html).
 
 This means that Emacs users don't have to wait for a new version of
 Emacs or to pull the file from a git repository to get the most recent
 development.  Just run `M-x list-packages` and you will find
-cperl-mode on the list for easy installation (works with Emacs 26 and
-above).
+cperl-mode on the list for easy installation.
 
 Development of cperl-mode will continue in the
 [GNU Emacs repository](https://cgit.git.savannah.gnu.org/cgit/emacs.git).
@@ -23,7 +25,7 @@ attempt at Emacs lisp).  I'd rather port functionality from the master
 branch into the Emacs repository than to fix its bugs here.
 
 If you have found a bug or desire a change in cperl-mode, then we
-recommend the traditional `M-x report-emacs-bug` procedure. Make sure
+recommend the traditional `M-x report-emacs-bug` procedure, make sure
 to mention "cperl-mode" in the email subject.  It simply gets more
 attention over there (including mine).
 
